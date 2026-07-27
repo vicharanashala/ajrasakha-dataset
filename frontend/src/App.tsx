@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useNavigate,
+  Navigate,
 } from "react-router-dom";
 import { SignUp } from "./pages/SignUp";
 import { SignIn } from "./pages/SignIn";
@@ -12,7 +13,7 @@ import { Questions } from "./pages/Questions";
 import { QuestionDetail } from "./pages/QuestionDetail";
 import { Profile } from "./pages/Profile";
 import { MyFeedbacks } from "./pages/MyFeedbacks";
-import type { AuthView, User } from "./types";
+import type { User } from "./types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,13 +26,17 @@ import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown } from "lucide-
 
 const USER_STORAGE_KEY = "ajrasakha_user";
 
-function AppContent() {
-  const [view, setView] = useState<AuthView>("signin");
-  const [pendingEmail, setPendingEmail] = useState<string>("");
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem(USER_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : null;
-  });
+// Protected route wrapper - redirects to signin if not authenticated
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  if (!storedUser) {
+    return <Navigate to="/signin" replace />;
+  }
+  return <>{children}</>;
+}
+
+// Layout wrapper for protected routes (with header and user menu)
+function ProtectedLayout() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     const stored = localStorage.getItem("theme");
     if (stored) return stored === "dark";
@@ -39,14 +44,6 @@ function AppContent() {
   });
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem(USER_STORAGE_KEY);
-    }
-  }, [currentUser]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -62,38 +59,17 @@ function AppContent() {
     setIsDarkMode((prev) => !prev);
   };
 
-  const handleSignupSuccess = (email: string) => {
-    setPendingEmail(email);
-    setView("verify-otp");
-  };
-
-  const handleVerified = (user: { id: string; email: string }) => {
-    setCurrentUser({
-      id: user.id,
-      email: user.email,
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    setView("signin");
-    setPendingEmail("");
-  };
-
-  const handleSignedIn = (user: User) => {
-    setCurrentUser(user);
-  };
-
   const handleSignOut = () => {
-    setCurrentUser(null);
-    setView("signin");
+    localStorage.removeItem(USER_STORAGE_KEY);
     setShowLogoutDialog(false);
+    window.location.href = '/signin';
   };
 
-  // Add useNavigate for navigation
   const navigate = useNavigate();
 
-  if (currentUser) {
-    return (
+  return (
+    <>
+      {/* Protected Routes with Header */}
       <div className="flex min-h-screen flex-col bg-background">
         <header className="sticky top-0 z-10 border-b border-border bg-card shadow-sm">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -127,7 +103,14 @@ function AppContent() {
                   className="gap-2"
                 >
                   <UserIcon className="h-4 w-4" />
-                  {currentUser?.firstName || currentUser?.email?.split("@")[0] || "User"}
+                  {(() => {
+                    const stored = localStorage.getItem(USER_STORAGE_KEY);
+                    if (stored) {
+                      const user = JSON.parse(stored);
+                      return user?.firstName || user?.email?.split("@")[0] || "User";
+                    }
+                    return "User";
+                  })()}
                   <ChevronDown className="h-4 w-4" />
                 </Button>
                 {showUserMenu && (
@@ -178,7 +161,7 @@ function AppContent() {
         </header>
         <main className="flex-1 w-full">
           <Routes>
-            <Route path="/" element={<Questions />} />
+            <Route path="/" element={<Navigate to="/questions" replace />} />
             <Route path="/questions" element={<Questions />} />
             <Route path="/questions/:id" element={<QuestionDetail />} />
             <Route path="/profile" element={<Profile />} />
@@ -209,21 +192,44 @@ function AppContent() {
           </DialogFooter>
         </Dialog>
       </div>
-    );
-  }
+    </>
+  );
+}
+
+// Auth layout with header (no user menu)
+function AuthLayout() {
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    const stored = localStorage.getItem("theme");
+    if (stored) return stored === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode((prev) => !prev);
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border bg-card/60 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 h-10">
             <img
               src="/annam-logo.png"
               alt="Annam Logo"
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">
-              Ajrasakha
+            <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">
+              Ajrasakha Dataset
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -245,34 +251,86 @@ function AppContent() {
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-4 py-12">
-        {view === "signin" && (
-          <SignIn
-            onSwitchToSignUp={() => setView("signup")}
-            onSignedIn={handleSignedIn}
-          />
-        )}
-        {view === "signup" && (
-          <SignUp
-            onSwitchToSignIn={() => setView("signin")}
-            onSignupSuccess={handleSignupSuccess}
-          />
-        )}
-        {view === "verify-otp" && (
-          <VerifyOtp
-            email={pendingEmail}
-            onVerified={handleVerified}
-            onBack={() => setView("signup")}
-          />
-        )}
+        <Routes>
+          <Route path="/signin" element={<SignInWrapper />} />
+          <Route path="/signup" element={<SignUpWrapper />} />
+          <Route path="/verify-otp" element={<VerifyOtpWrapper />} />
+        </Routes>
       </main>
     </div>
   );
 }
 
+// Wrapper components for auth pages
+function SignInWrapper() {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  if (storedUser) {
+    return <Navigate to="/questions" replace />;
+  }
+
+  const handleSignedIn = (user: User) => {
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    window.location.href = '/questions';
+  };
+
+  return <SignIn onSwitchToSignUp={() => window.location.href = '/signup'} onSignedIn={handleSignedIn} />;
+}
+
+function SignUpWrapper() {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  if (storedUser) {
+    return <Navigate to="/questions" replace />;
+  }
+
+  const handleSignupSuccess = (email: string) => {
+    localStorage.setItem('ajrasakha_pending_email', email);
+    window.location.href = '/verify-otp';
+  };
+
+  return <SignUp onSwitchToSignIn={() => window.location.href = '/signin'} onSignupSuccess={handleSignupSuccess} />;
+}
+
+function VerifyOtpWrapper() {
+  const pendingEmail = localStorage.getItem('ajrasakha_pending_email') || '';
+
+  const handleVerified = (user: { id: string; email: string }) => {
+    localStorage.removeItem('ajrasakha_pending_email');
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
+      ...user,
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    window.location.href = '/questions';
+  };
+
+  if (!pendingEmail) {
+    return <Navigate to="/signup" replace />;
+  }
+
+  return <VerifyOtp email={pendingEmail} onVerified={handleVerified} onBack={() => window.location.href = '/signup'} />;
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <Routes>
+        {/* Auth routes without header */}
+        <Route element={<AuthLayout />}>
+          <Route path="/signin" element={<SignInWrapper />} />
+          <Route path="/signup" element={<SignUpWrapper />} />
+          <Route path="/verify-otp" element={<VerifyOtpWrapper />} />
+        </Route>
+
+        {/* Protected routes with header - all require authentication */}
+        <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+          <Route path="/" element={<Navigate to="/questions" replace />} />
+          <Route path="/questions" element={<Questions />} />
+          <Route path="/questions/:id" element={<QuestionDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-feedbacks" element={<MyFeedbacks />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }
