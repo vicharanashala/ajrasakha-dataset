@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  UnauthorizedException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
@@ -16,36 +11,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
     private readonly configService: ConfigService,
   ) {
-    const clientID = configService.get<string>('GOOGLE_CLIENT_ID');
-    const clientSecret = configService.get<string>('GOOGLE_CLIENT_SECRET');
-    let callbackURL = configService.get<string>('GOOGLE_CALLBACK_URL');
-
-    // Validate required environment variables
-    if (!clientID || !clientSecret) {
-      console.error('Google OAuth configuration error:');
-      console.error('GOOGLE_CLIENT_ID:', clientID ? 'SET' : 'MISSING');
-      console.error('GOOGLE_CLIENT_SECRET:', clientSecret ? 'SET' : 'MISSING');
-      throw new InternalServerErrorException(
-        'Google OAuth is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables.',
-      );
-    }
-
-    // If no callback URL provided, construct it from base URL
-    if (!callbackURL) {
-      const baseUrl = configService.get<string>('BASE_URL');
-      if (baseUrl) {
-        callbackURL = `${baseUrl}/api/auth/google/callback`;
-      } else {
-        callbackURL = '/api/auth/google/callback';
-      }
-    }
-
-    console.log('Google OAuth initialized with callback URL:', callbackURL);
-
     super({
-      clientID,
-      clientSecret,
-      callbackURL,
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
+      callbackURL:
+        configService.get<string>('GOOGLE_CALLBACK_URL') ||
+        '/api/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
