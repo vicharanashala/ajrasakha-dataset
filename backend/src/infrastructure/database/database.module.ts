@@ -2,10 +2,6 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-const DEFAULT_MONGODB_URI =
-  'mongodb+srv://lpulga167_db_user:AlYI819Ba8Md1ly7@chatbot.icehz1c.mongodb.net/?appName=chatbot';
-const DEFAULT_MONGODB_DB_NAME = 'ajraskha-dataset';
-
 /**
  * Global MongoDB connection module. The connection is initialised once for the
  * whole application; feature modules register their own schemas via
@@ -18,14 +14,22 @@ const DEFAULT_MONGODB_DB_NAME = 'ajraskha-dataset';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const uri =
-          config.get<string>('MONGODB_URI') ??
-          `${DEFAULT_MONGODB_URI.replace(/\?.*$/, '')}/${DEFAULT_MONGODB_DB_NAME}?appName=chatbot`;
-        console.log('MongoDB URI configured:', uri ? 'SET' : 'NOT SET');
+        const uri = config.get<string>('MONGODB_URI');
+        const dbName = config.get<string>('MONGODB_DB_NAME');
+
+        if (!uri) {
+          throw new Error('MONGODB_URI environment variable is required');
+        }
+        if (!dbName) {
+          throw new Error('MONGODB_DB_NAME environment variable is required');
+        }
+
+        console.log('MongoDB URI configured: SET');
+        console.log('MongoDB Database:', dbName);
+
         return {
           uri,
-          dbName:
-            config.get<string>('MONGODB_DB_NAME') ?? DEFAULT_MONGODB_DB_NAME,
+          dbName,
           serverSelectionTimeoutMS: 30000, // 30 seconds - longer for Cloud Run
           connectTimeoutMS: 30000, // 30 seconds - longer for Cloud Run
           socketTimeoutMS: 45000,
