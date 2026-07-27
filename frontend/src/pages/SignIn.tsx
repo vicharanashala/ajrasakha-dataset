@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 import type { User } from '../types';
 import { Button } from '@/components/ui/button';

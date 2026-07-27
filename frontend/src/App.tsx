@@ -32,7 +32,10 @@ const USER_STORAGE_KEY = "ajrasakha_user";
 // Protected route wrapper - redirects to signin if not authenticated
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = getToken();
-  if (!token) {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  
+  // Redirect to signin if not authenticated (no token AND no stored user)
+  if (!token && !storedUser) {
     return <Navigate to="/signin" replace />;
   }
   return <>{children}</>;
@@ -314,6 +317,7 @@ function AuthLayout() {
 
 // Wrapper components for auth pages
 function SignInWrapper() {
+  const navigate = useNavigate();
   const token = getToken();
   if (token) {
     return <Navigate to="/questions" replace />;
@@ -322,25 +326,35 @@ function SignInWrapper() {
   const handleSignedIn = (user: User, token: string) => {
     setToken(token);
     setUser(user);
-    window.location.href = '/questions';
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
+      ...user,
+      isVerified: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    navigate('/questions');
   };
 
-  return <SignIn onSwitchToSignUp={() => window.location.href = '/signup'} onSignedIn={handleSignedIn} />;
+  return <SignIn onSwitchToSignUp={() => navigate('/signup')} onSignedIn={handleSignedIn} />;
 }
 
 
 function SignUpWrapper() {
+  const navigate = useNavigate();
+  const token = getToken();
   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-  if (storedUser) {
+  
+  // Redirect to questions if already authenticated
+  if (token || storedUser) {
     return <Navigate to="/questions" replace />;
   }
 
   const handleSignupSuccess = (email: string) => {
     localStorage.setItem('ajrasakha_pending_email', email);
-    window.location.href = '/verify-otp';
+    navigate('/verify-otp');
   };
 
-  return <SignUp onSwitchToSignIn={() => window.location.href = '/signin'} onSignupSuccess={handleSignupSuccess} />;
+  return <SignUp onSwitchToSignIn={() => navigate('/signin')} onSignupSuccess={handleSignupSuccess} />;
 }
 
 function VerifyOtpWrapper() {

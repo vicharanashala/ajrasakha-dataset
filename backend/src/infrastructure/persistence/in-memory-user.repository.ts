@@ -21,7 +21,12 @@ export class InMemoryUserRepository implements UserRepository {
       id: this.generateId(),
       email: props.email.toLowerCase(),
       passwordHash: props.passwordHash,
-      isVerified: false,
+      isVerified: props.isVerified ?? false,
+      firstName: props.firstName,
+      lastName: props.lastName,
+      googleId: props.googleId,
+      avatar: props.avatar,
+      authProvider: props.authProvider,
       createdAt: now,
       updatedAt: now,
     };

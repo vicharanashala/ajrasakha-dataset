@@ -37,7 +37,12 @@ export class MongoUserRepository implements UserRepository {
     const created = await this.userModel.create({
       email: props.email.toLowerCase(),
       passwordHash: props.passwordHash,
-      isVerified: false,
+      isVerified: props.isVerified ?? false,
+      firstName: props.firstName,
+      lastName: props.lastName,
+      googleId: props.googleId,
+      avatar: props.avatar,
+      authProvider: props.authProvider,
     });
     return this.toEntity(created);
   }
