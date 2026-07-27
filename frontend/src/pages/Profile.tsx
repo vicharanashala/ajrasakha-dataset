@@ -264,9 +264,6 @@ export function Profile() {
                 <p className="text-sm text-muted-foreground">
                   Reset your password by receiving an OTP on your registered email ({email})
                 </p>
-                <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded border border-amber-200 dark:border-amber-800">
-                  <strong>Development Mode:</strong> The OTP will be printed in the backend terminal/console.
-                </p>
                 <Button
                   variant="outline"
                   onClick={() => setShowPasswordReset(true)}
@@ -284,9 +281,6 @@ export function Profile() {
                   </label>
                   <Input value={email} disabled className="bg-muted/50" />
                 </div>
-                <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 p-2 rounded border border-amber-200 dark:border-amber-800">
-                  <strong>Development Mode:</strong> Check your backend terminal for the OTP!
-                </p>
                 <Button
                   onClick={handleRequestPasswordReset}
                   disabled={resetting}
