@@ -402,12 +402,12 @@ function App() {
         </Route>
 
         {/* Protected routes with header - all require authentication */}
-        <Route path="/*" element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
-          <Route path="/" element={<Navigate to="/questions" replace />} />
-          <Route path="/questions" element={<Questions />} />
-          <Route path="/questions/:id" element={<QuestionDetail />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/my-feedbacks" element={<MyFeedbacks />} />
+        <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="/questions" replace />} />
+          <Route path="questions" element={<Questions />} />
+          <Route path="questions/:id" element={<QuestionDetail />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="my-feedbacks" element={<MyFeedbacks />} />
         </Route>
       </Routes>
     </BrowserRouter>
