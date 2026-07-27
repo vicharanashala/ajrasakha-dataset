@@ -12,6 +12,7 @@ build/
 
 # But track .env.example files
 !.env.example
+!.env.docker.example
 !backend/.env.example
 !frontend/.env.example
 

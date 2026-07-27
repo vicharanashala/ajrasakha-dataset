@@ -4,7 +4,6 @@ import {
   Routes,
   Route,
   useNavigate,
-  useLocation,
 } from "react-router-dom";
 import { SignUp } from "./pages/SignUp";
 import { SignIn } from "./pages/SignIn";
@@ -22,7 +21,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Sun, Moon, User as UserIcon, Menu, MessageCircle, ChevronDown } from "lucide-react";
+import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown } from "lucide-react";
 
 const USER_STORAGE_KEY = "ajrasakha_user";
 
@@ -92,7 +91,6 @@ function AppContent() {
 
   // Add useNavigate for navigation
   const navigate = useNavigate();
-  const location = useLocation();
 
   if (currentUser) {
     return (

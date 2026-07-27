@@ -10,11 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from '../components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/atoms/pagination';
-import { AlertCircle, Loader2, Search, MapPin, Leaf, Filter, X, MessageCircle } from 'lucide-react';
+import { AlertCircle, Loader2, Search, MapPin, Leaf, X, MessageCircle } from 'lucide-react';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
 
@@ -579,14 +579,6 @@ export function Questions() {
   };
 
   const hasActiveFilters = filters.state || filters.crop || filters.search || showPendingFeedback;
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
 
   const handlePageChange = (newPage: number) => {
     if (pagination && newPage >= 1 && newPage <= pagination.totalPages) {

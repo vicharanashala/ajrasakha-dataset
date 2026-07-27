@@ -3,15 +3,11 @@ import { ThumbsUp, ThumbsDown, Send, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  feedbackService,
-  questionService,
-} from '../services/api';
+import { feedbackService } from '../services/api';
 import {
   POSITIVE_FEEDBACK_OPTIONS,
   NEGATIVE_FEEDBACK_OPTIONS,
   type FeedbackType,
-  type IFeedback,
 } from '../types';
 
 interface FeedbackFormProps {
