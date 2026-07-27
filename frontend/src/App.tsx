@@ -6,6 +6,7 @@ import {
   useNavigate,
   Navigate,
   useSearchParams,
+  Outlet,
 } from "react-router-dom";
 import { SignUp } from "./pages/SignUp";
 import { SignIn } from "./pages/SignIn";
@@ -30,7 +31,7 @@ import { getToken, clearAuth, setToken, setUser } from "./services/api";
 const USER_STORAGE_KEY = "ajrasakha_user";
 
 // Protected route wrapper - redirects to signin if not authenticated
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute() {
   const token = getToken();
   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
   
@@ -38,7 +39,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!token && !storedUser) {
     return <Navigate to="/signin" replace />;
   }
-  return <>{children}</>;
+  return <Outlet />;
 }
 
 
@@ -69,7 +70,7 @@ function ProtectedLayout() {
   const handleSignOut = () => {
     clearAuth();
     setShowLogoutDialog(false);
-    window.location.href = '/signin';
+    navigate('/signin');
   };
 
 
@@ -168,13 +169,7 @@ function ProtectedLayout() {
           </div>
         </header>
         <main className="flex-1 w-full">
-          <Routes>
-            <Route path="/" element={<Navigate to="/questions" replace />} />
-            <Route path="/questions" element={<Questions />} />
-            <Route path="/questions/:id" element={<QuestionDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-feedbacks" element={<MyFeedbacks />} />
-          </Routes>
+          <Outlet />
         </main>
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
           <DialogHeader>
@@ -402,12 +397,14 @@ function App() {
         </Route>
 
         {/* Protected routes with header - all require authentication */}
-        <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
-          <Route index element={<Navigate to="/questions" replace />} />
-          <Route path="questions" element={<Questions />} />
-          <Route path="questions/:id" element={<QuestionDetail />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="my-feedbacks" element={<MyFeedbacks />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedLayout />}>
+            <Route path="/" element={<Navigate to="/questions" replace />} />
+            <Route path="/questions" element={<Questions />} />
+            <Route path="/questions/:id" element={<QuestionDetail />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/my-feedbacks" element={<MyFeedbacks />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>
