@@ -28,6 +28,123 @@ import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown } from "lucide-
 import { getToken, clearAuth, setToken, setUser } from "./services/api";
 
 
+// Common Header Component
+interface HeaderProps {
+  isDarkMode: boolean;
+  onToggleTheme: () => void;
+  showUserMenu?: boolean;
+  onShowUserMenu?: boolean;
+  onToggleUserMenu?: () => void;
+  onNavigate?: (path: string) => void;
+  onSignOut?: () => void;
+  showLogoutDialog?: boolean;
+  onShowLogoutDialog?: (show: boolean) => void;
+}
+
+function Header({
+  isDarkMode,
+  onToggleTheme,
+  showUserMenu,
+  onToggleUserMenu,
+  onNavigate,
+  onSignOut,
+}: HeaderProps) {
+  const navigate = useNavigate();
+  
+  return (
+    <header className="sticky top-0 z-10 border-b border-border bg-card shadow-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-0 py-3">
+        <div className="flex items-center gap-3 h-10">
+          <img
+            src="/annam-logo.png"
+            alt="Annam Logo"
+            className="h-10 w-auto"
+          />
+          <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">
+            Ajrasakha Dataset
+          </h1>
+        </div>
+        <div className="flex items-center gap-4 pl-4">
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-md border border-border hover:bg-muted transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDarkMode ? (
+              <Sun className="h-4 w-4 text-foreground" />
+            ) : (
+              <Moon className="h-4 w-4 text-foreground" />
+            )}
+          </button>
+          {/* User Menu Dropdown - only shown when user is logged in */}
+          {onToggleUserMenu && onNavigate && onSignOut && (
+            <div className="relative">
+              <Button
+                variant="outline"
+                onClick={onToggleUserMenu}
+                className="gap-2"
+              >
+                <UserIcon className="h-4 w-4" />
+                {(() => {
+                  const stored = localStorage.getItem(USER_STORAGE_KEY);
+                  if (stored) {
+                    const user = JSON.parse(stored);
+                    return user?.firstName || user?.email?.split("@")[0] || "User";
+                  }
+                  return "User";
+                })()}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {showUserMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => onToggleUserMenu()}
+                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          navigate("/profile");
+                          onToggleUserMenu();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      >
+                        <UserIcon className="h-4 w-4" />
+                        Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate("/my-feedbacks");
+                          onToggleUserMenu();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        My Feedbacks
+                      </button>
+                      <hr className="my-1 border-border" />
+                      <button
+                        onClick={() => {
+                          onSignOut();
+                          onToggleUserMenu();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-muted text-destructive flex items-center gap-2"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
 const USER_STORAGE_KEY = "ajrasakha_user";
 
 // Protected route wrapper - redirects to signin if not authenticated
@@ -77,96 +194,15 @@ function ProtectedLayout() {
 
   return (
     <>
-      {/* Protected Routes with Header */}
       <div className="flex min-h-screen flex-col bg-background">
-        <header className="sticky top-0 z-10 border-b border-border bg-card shadow-sm">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-3 h-10">
-              <img
-                src="/annam-logo.png"
-                alt="Annam Logo"
-                className="h-10 w-auto"
-              />
-              <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">
-                Ajrasakha Dataset
-              </h1>
-            </div>
-            <div className="flex items-center gap-4 pl-4">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-md border border-border hover:bg-muted transition-colors"
-                aria-label="Toggle theme"
-              >
-                {isDarkMode ? (
-                  <Sun className="h-4 w-4 text-foreground" />
-                ) : (
-                  <Moon className="h-4 w-4 text-foreground" />
-                )}
-              </button>
-              {/* User Menu Dropdown */}
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="gap-2"
-                >
-                  <UserIcon className="h-4 w-4" />
-                  {(() => {
-                    const stored = localStorage.getItem(USER_STORAGE_KEY);
-                    if (stored) {
-                      const user = JSON.parse(stored);
-                      return user?.firstName || user?.email?.split("@")[0] || "User";
-                    }
-                    return "User";
-                  })()}
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-                {showUserMenu && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowUserMenu(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg z-50">
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            navigate("/profile");
-                            setShowUserMenu(false);
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
-                        >
-                          <UserIcon className="h-4 w-4" />
-                          Profile
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigate("/my-feedbacks");
-                            setShowUserMenu(false);
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                          My Feedbacks
-                        </button>
-                        <hr className="my-1 border-border" />
-                        <button
-                          onClick={() => {
-                            setShowLogoutDialog(true);
-                            setShowUserMenu(false);
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-muted text-destructive flex items-center gap-2"
-                        >
-                          Sign Out
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
+        <Header
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+          showUserMenu={showUserMenu}
+          onToggleUserMenu={() => setShowUserMenu(!showUserMenu)}
+          onNavigate={(path) => navigate(path)}
+          onSignOut={() => setShowLogoutDialog(true)}
+        />
         <main className="flex-1 w-full">
           <Outlet />
         </main>
@@ -266,36 +302,10 @@ function AuthLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border bg-card/60 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3 h-10">
-            <img
-              src="/annam-logo.png"
-              alt="Annam Logo"
-              className="h-10 w-auto"
-            />
-            <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">
-              Ajrasakha Dataset
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
-              Farmer-Centric Dataset
-            </span>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-md border border-border hover:bg-muted transition-colors"
-              aria-label="Toggle theme"
-            >
-              {isDarkMode ? (
-                <Sun className="h-4 w-4 text-foreground" />
-              ) : (
-                <Moon className="h-4 w-4 text-foreground" />
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header
+        isDarkMode={isDarkMode}
+        onToggleTheme={toggleTheme}
+      />
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <Routes>
           <Route path="/signin" element={<SignInWrapper />} />

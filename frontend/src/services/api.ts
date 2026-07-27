@@ -86,10 +86,10 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
+    // Only redirect on 401 if there's actually a token (meaning it's an expired token)
+    // Don't redirect on 401 during sign-in attempts (wrong credentials)
+    if (error.response?.status === 401 && getToken()) {
       clearAuth();
-      // Optionally redirect to login
       window.location.href = '/signin';
     }
     return Promise.reject(error);

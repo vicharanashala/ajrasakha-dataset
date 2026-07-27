@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { authService } from '../services/api';
 import type { User } from '../types';
 import { Button } from '@/components/ui/button';
@@ -33,9 +33,7 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
     window.location.href = `${backendUrl}/auth/google`;
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmitInternal = async () => {
     // Prevent double submission
     if (isSubmitting) return;
     
@@ -53,14 +51,17 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
     } catch (err: unknown) {
       // Type guard for axios error
       if (err && typeof err === 'object' && 'response' in err) {
-        const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+        const axiosError = err as { response?: { data?: { message?: string | string[] | { message: string; email?: string } } } };
         const data = axiosError.response?.data;
         if (data && typeof data === 'object' && 'message' in data) {
-          const msg = data.message;
-          if (Array.isArray(msg)) {
-            setError(msg[0] || 'Failed to sign in. Please check your credentials.');
-          } else if (typeof msg === 'string') {
+          const msg = (data as { message: string | string[] | { message: string; email?: string } }).message;
+          if (typeof msg === 'string') {
             setError(msg);
+          } else if (Array.isArray(msg)) {
+            setError(msg[0] || 'Failed to sign in. Please check your credentials.');
+          } else if (typeof msg === 'object' && msg !== null) {
+            // Handle object format: { message: string, email: string }
+            setError(msg.message);
           } else {
             setError('Failed to sign in. Please check your credentials.');
           }
@@ -132,7 +133,7 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="signin-email">Email</Label>
             <Input
@@ -140,8 +141,12 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !loading && email && password) {
+                  handleSubmitInternal();
+                }
+              }}
               placeholder="you@example.com"
-              required
               autoComplete="email"
             />
           </div>
@@ -153,16 +158,25 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !loading && email && password) {
+                  handleSubmitInternal();
+                }
+              }}
               placeholder="Your password"
-              required
               autoComplete="current-password"
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full" onClick={(e) => e.stopPropagation()}>
+          <Button
+            type="button"
+            disabled={loading || !email || !password}
+            onClick={handleSubmitInternal}
+            className="w-full"
+          >
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
-        </form>
+        </div>
       </CardContent>
       <CardFooter className="justify-center">
         <p className="text-sm text-muted-foreground">

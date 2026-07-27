@@ -41,7 +41,7 @@ export class MongoQuestionRepository implements QuestionRepository {
       query['details.state'] = { $regex: filters.state, $options: 'i' };
     }
     if (filters.crop) {
-      query['details.crop'] = { $regex: filters.crop, $options: 'i' };
+      query['details.crop'] = filters.crop;
     }
     if (filters.domain) {
       query['details.domain'] = { $regex: filters.domain, $options: 'i' };

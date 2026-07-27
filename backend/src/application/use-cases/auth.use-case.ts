@@ -142,8 +142,10 @@ export class AuthUseCases {
   async signin(
     email: string,
     password: string,
-  ): Promise<{ message: string; user: Partial<User>; token: string }> {
-    const user = await this.userRepository.findByEmail(email);
+  ): Promise<{ message: string; user: Partial<User>; token: string; requiresVerification?: boolean }> {
+    const normalizedEmail = email.toLowerCase();
+    
+    const user = await this.userRepository.findByEmail(normalizedEmail);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -155,10 +157,23 @@ export class AuthUseCases {
       );
     }
 
-    if (!user.isVerified) {
-      throw new UnauthorizedException(
-        'Please verify your email before signing in',
-      );
+    if (user.isVerified === false) {
+      // Check if OTP is still valid
+      if (user.otp && user.otpExpiresAt && !this.otpService.isExpired(user.otpExpiresAt)) {
+        throw new UnauthorizedException({
+          message: 'Please verify your email before signing in',
+          email: user.email,
+        });
+      }
+      // OTP expired or doesn't exist, resend it
+      const otp = this.otpService.generateOtp();
+      const otpExpiresAt = this.otpService.getExpiry();
+      await this.userRepository.update(user.id, { otp, otpExpiresAt });
+      await this.emailService.sendOtp(user.email, otp, 'signup');
+      throw new UnauthorizedException({
+        message: 'Your verification code has expired. A new OTP has been sent to your email. Please verify your email before signing in.',
+        email: user.email,
+      });
     }
 
     const passwordHash = this.hashPassword(password);

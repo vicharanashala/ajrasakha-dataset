@@ -749,8 +749,6 @@ export function Questions() {
                       currentPage={pagination.page}
                       totalPages={pagination.totalPages}
                       onPageChange={handlePageChange}
-                      limit={limit}
-                      onLimitChange={handleLimitChange}
                     />
                   </div>
                 )}
