@@ -55,8 +55,11 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 # Change ownership of app directory
 USER nestjs
 
+# Set port (Cloud Run uses PORT env var, default to 8080)
+ENV PORT=8080
+
 # Expose port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "dist/main"]
