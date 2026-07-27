@@ -534,6 +534,11 @@ export function Questions() {
     }
   }, [filters, limit]);
 
+  // Fetch questions when filters or limit change
+  useEffect(() => {
+    fetchQuestions(1);
+  }, [fetchQuestions]);
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
