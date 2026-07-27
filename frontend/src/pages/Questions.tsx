@@ -17,7 +17,7 @@ import { Pagination } from '@/components/atoms/pagination';
 import { AlertCircle, Loader2, Search, MapPin, Leaf, X } from 'lucide-react';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
-
+, remo
 const STATES = [
   'Andaman and Nicobar Islands',
   'Andhra Pradesh',
@@ -683,11 +683,14 @@ export function Questions() {
               </div>
             ) : (
               <>
-            <div className="overflow-x-auto">
+                <div className="overflow-x-auto">
               <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50 border-border">
-                        <TableHead className="pl-4 py-3 font-medium text-foreground text-sm">
+                        <TableHead className="pl-4 py-3 font-medium text-foreground text-sm w-12">
+                          #
+                        </TableHead>
+                        <TableHead className="py-3 font-medium text-foreground text-sm">
                           Question
                         </TableHead>
                         <TableHead className="py-3 font-medium text-foreground text-sm">
@@ -707,7 +710,10 @@ export function Questions() {
                             index % 2 === 0 ? 'bg-background' : 'bg-muted/5'
                           }`}
                         >
-                          <TableCell className="pl-4 py-3">
+                          <TableCell className="pl-4 py-3 text-sm text-muted-foreground">
+                            {(pagination ? (pagination.page - 1) * limit : 0) + index + 1}
+                          </TableCell>
+                          <TableCell className="py-3">
                             <span className="text-sm text-foreground line-clamp-2">
                               {q.question}
                             </span>
