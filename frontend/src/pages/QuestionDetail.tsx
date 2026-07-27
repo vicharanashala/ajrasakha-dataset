@@ -49,16 +49,6 @@ export function QuestionDetail() {
     fetchData();
   }, [id]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const getSourceIcon = (sourceType?: string) => {
     switch (sourceType) {
       case 'web':
@@ -138,17 +128,7 @@ export function QuestionDetail() {
         {/* Question Card */}
         <Card className="shadow-sm border-border/50">
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <CardTitle className="text-xl font-semibold">Question</CardTitle>
-                <p className="text-xs text-muted-foreground">
-                  ID: {question.id}
-                </p>
-              </div>
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-muted text-muted-foreground">
-                {question.status}
-              </span>
-            </div>
+            <CardTitle className="text-xl font-semibold">Question</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-lg text-foreground">{question.question}</p>
@@ -178,13 +158,6 @@ export function QuestionDetail() {
                   <p className="text-sm font-medium">{question.details.season}</p>
                 </div>
               )}
-            </div>
-
-            <div className="flex flex-wrap gap-4 pt-4 border-t border-border text-sm text-muted-foreground">
-              <p>Source: {question.source}</p>
-              <p>Priority: {question.priority}</p>
-              <p>Created: {formatDate(question.createdAt)}</p>
-              {question.closedAt && <p>Closed: {formatDate(question.closedAt)}</p>}
             </div>
           </CardContent>
         </Card>
@@ -233,12 +206,6 @@ export function QuestionDetail() {
                 </div>
               )}
 
-              {/* Answer Metadata */}
-              <div className="flex flex-wrap gap-4 pt-4 border-t border-border text-sm text-muted-foreground">
-                <p>Answer Iteration: {answer.answerIteration}</p>
-                <p>Approval Count: {answer.approvalCount}</p>
-                {answer.remarks && <p>Remarks: {answer.remarks}</p>}
-              </div>
             </CardContent>
           </Card>
         )}

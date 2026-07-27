@@ -17,7 +17,7 @@ import { Pagination } from '@/components/atoms/pagination';
 import { AlertCircle, Loader2, Search, MapPin, Leaf, X } from 'lucide-react';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
-, remo
+
 const STATES = [
   'Andaman and Nicobar Islands',
   'Andhra Pradesh',
