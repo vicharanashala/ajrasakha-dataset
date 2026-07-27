@@ -319,7 +319,10 @@ function AuthLayout() {
 function SignInWrapper() {
   const navigate = useNavigate();
   const token = getToken();
-  if (token) {
+  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+  
+  // Redirect to questions if already authenticated (either token or storedUser)
+  if (token || storedUser) {
     return <Navigate to="/questions" replace />;
   }
 
