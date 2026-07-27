@@ -5,32 +5,35 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 
-// Startup timeout to prevent hanging
-const STARTUP_TIMEOUT = 30000; // 30 seconds
+// Global error handlers
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT EXCEPTION:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
 
 async function bootstrap() {
   console.log('=== APP STARTING ===');
   console.log('PORT:', process.env.PORT);
   console.log('NODE_ENV:', process.env.NODE_ENV);
   console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET');
-  
-  // Create app with timeout
-  const createAppPromise = NestFactory.create<NestExpressApplication>(AppModule);
-  
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => reject(new Error('App creation timed out after 30 seconds')), STARTUP_TIMEOUT);
-  });
-  
+
   let app: NestExpressApplication;
   try {
-    app = await Promise.race([createAppPromise, timeoutPromise]) as NestExpressApplication;
+    console.log('Creating NestJS application...');
+    app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      logger: ['error', 'warn', 'log', 'debug'],
+    });
     console.log('App module created successfully');
   } catch (error) {
     console.error('Failed to create app:', error);
     process.exit(1);
     return;
   }
-  
+
   const configService = app.get(ConfigService);
 
   // Enable CORS
@@ -48,21 +51,27 @@ async function bootstrap() {
   // Serve static files from frontend/dist
   const frontendDistPath = join(__dirname, '..', 'frontend', 'dist');
   console.log('Frontend dist path:', frontendDistPath);
-  
-  if (process.env.NODE_ENV === 'production') {
-    // In production, serve static files
-    app.useStaticAssets(frontendDistPath, {
-      prefix: '/',
-    });
 
-    // SPA fallback
-    app.use((req: any, res: any, next: any) => {
-      if (req.path.startsWith('/api')) {
-        next();
-        return;
-      }
-      res.sendFile(join(frontendDistPath, 'index.html'));
-    });
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      // In production, serve static files
+      app.useStaticAssets(frontendDistPath, {
+        prefix: '/',
+      });
+      console.log('Static assets configured');
+
+      // SPA fallback
+      app.use((req: any, res: any, next: any) => {
+        if (req.path.startsWith('/api')) {
+          next();
+          return;
+        }
+        res.sendFile(join(frontendDistPath, 'index.html'));
+      });
+      console.log('SPA fallback configured');
+    } catch (error) {
+      console.warn('Static assets setup error (non-fatal):', error);
+    }
   }
 
   // Enable validation pipe for DTOs
@@ -76,8 +85,9 @@ async function bootstrap() {
 
   const port = parseInt(process.env.PORT || '8080', 10);
   console.log('Starting server on port:', port);
-  
+
   await app.listen(port);
-  console.log(`=== APP RUNNING ON http://localhost:${port} ===`);
+  console.log(`=== APP RUNNING ON http://0.0.0.0:${port} ===`);
+  console.log(`Cloud Run health check ready`);
 }
 bootstrap();
