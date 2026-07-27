@@ -91,7 +91,7 @@ function ProtectedLayout() {
                 Ajrasakha Dataset
               </h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4 pl-4">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-md border border-border hover:bg-muted transition-colors"
