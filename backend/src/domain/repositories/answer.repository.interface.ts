@@ -19,6 +19,7 @@ export interface IAnswer {
   id: string;
   questionId: string | Types.ObjectId;
   authorId?: string | Types.ObjectId;
+  authorName?: string;
   answerIteration: number;
   approvalCount: number;
   isFinalAnswer: boolean;

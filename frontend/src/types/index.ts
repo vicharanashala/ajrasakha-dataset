@@ -178,6 +178,7 @@ export interface IAnswer {
   id: string;
   questionId: string;
   authorId?: string;
+  authorName?: string;
   answerIteration: number;
   approvalCount: number;
   isFinalAnswer: boolean;

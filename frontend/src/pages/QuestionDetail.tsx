@@ -166,7 +166,14 @@ export function QuestionDetail() {
         {answer && (
           <Card className="shadow-sm border-border/50">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">Final Answer</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl font-semibold">Final Answer</CardTitle>
+                {answer.authorName && (
+                  <span className="text-sm text-muted-foreground">
+                    By {answer.authorName}
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="prose prose-sm max-w-none">

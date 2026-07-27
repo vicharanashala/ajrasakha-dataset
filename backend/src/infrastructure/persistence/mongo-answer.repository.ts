@@ -22,11 +22,73 @@ export class MongoAnswerRepository implements AnswerRepository {
   }
 
   async findByQuestionIdAndFinal(questionId: string): Promise<IAnswer | null> {
-    const answer = await this.answerModel.findOne({
-      questionId: new Types.ObjectId(questionId),
-      isFinalAnswer: true,
-    });
-    return answer ? this.toIAnswer(answer) : null;
+    const result = await this.answerModel.aggregate([
+      {
+        $match: {
+          questionId: new Types.ObjectId(questionId),
+          isFinalAnswer: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'authorId',
+          foreignField: '_id',
+          as: 'author',
+        },
+      },
+      {
+        $addFields: {
+          authorName: {
+            $cond: {
+              if: { $gt: [{ $size: '$author' }, 0] },
+              then: {
+                $trim: {
+                  input: {
+                    $concat: [
+                      { $arrayElemAt: ['$author.firstName', 0] },
+                      ' ',
+                      { $arrayElemAt: ['$author.lastName', 0] },
+                    ],
+                  },
+                },
+              },
+              else: null,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          author: 0,
+        },
+      },
+    ]);
+
+    if (!result || result.length === 0) {
+      return null;
+    }
+
+    const doc = result[0];
+    return {
+      id: doc._id.toString(),
+      questionId: doc.questionId.toString(),
+      authorId: doc.authorId?.toString(),
+      authorName: doc.authorName,
+      answerIteration: doc.answerIteration,
+      approvalCount: doc.approvalCount,
+      isFinalAnswer: doc.isFinalAnswer,
+      remarks: doc.remarks,
+      approvedBy: doc.approvedBy?.toString(),
+      status: doc.status,
+      answer: doc.answer,
+      reRouted: doc.reRouted,
+      modifications: doc.modifications,
+      sources: doc.sources,
+      embedding: doc.embedding,
+      createdAt: doc.createdAt || new Date(),
+      updatedAt: doc.updatedAt || new Date(),
+    };
   }
 
   private toIAnswer(doc: AnswerDocument): IAnswer {
