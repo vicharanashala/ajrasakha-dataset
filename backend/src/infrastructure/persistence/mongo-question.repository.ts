@@ -7,7 +7,10 @@ import type {
   PaginatedQuestions,
 } from '../../domain/repositories/question.repository.interface';
 import type { Question } from '../../domain/repositories/question.repository.interface';
-import { QuestionEntity, QuestionEntityDocument } from '../database/schemas/question.schema';
+import {
+  QuestionEntity,
+  QuestionEntityDocument,
+} from '../database/schemas/question.schema';
 
 @Injectable()
 export class MongoQuestionRepository implements QuestionRepository {
@@ -49,7 +52,9 @@ export class MongoQuestionRepository implements QuestionRepository {
 
     // Exclude specific question IDs (e.g., those with user feedback)
     if (excludeQuestionIds && excludeQuestionIds.length > 0) {
-      query._id = { $nin: excludeQuestionIds.map((id) => new Types.ObjectId(id)) };
+      query._id = {
+        $nin: excludeQuestionIds.map((id) => new Types.ObjectId(id)),
+      };
     }
 
     // Add vector search filter if provided
@@ -74,10 +79,12 @@ export class MongoQuestionRepository implements QuestionRepository {
 
     // If vector search is requested, score and reorder results
     if (searchEmbedding && searchEmbedding.length > 0) {
-      const scored = questions.map((q) => ({
-        question: q,
-        score: this.cosineSimilarity(searchEmbedding, q.embedding),
-      })).sort((a, b) => b.score - a.score);
+      const scored = questions
+        .map((q) => ({
+          question: q,
+          score: this.cosineSimilarity(searchEmbedding, q.embedding),
+        }))
+        .sort((a, b) => b.score - a.score);
 
       return {
         data: scored.map((s) => s.question),
@@ -115,10 +122,7 @@ export class MongoQuestionRepository implements QuestionRepository {
     if (filters?.status) query.status = filters.status;
     if (filters?.source) query.source = filters.source;
 
-    const docs = await this.questionModel
-      .find(query)
-      .allowDiskUse(true)
-      .exec();
+    const docs = await this.questionModel.find(query).allowDiskUse(true).exec();
 
     const scored = docs
       .map((doc) => ({

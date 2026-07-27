@@ -1,4 +1,8 @@
-import { QuestionStatus, IQuestionPriority, QuestionSource } from '../../infrastructure/database/schemas/question.schema';
+import {
+  QuestionStatus,
+  IQuestionPriority,
+  QuestionSource,
+} from '../../infrastructure/database/schemas/question.schema';
 
 export interface QuestionDetails {
   state?: string;

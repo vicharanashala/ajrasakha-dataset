@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Feedback, FeedbackDocument } from '../database/schemas/feedback.schema';
+import {
+  Feedback,
+  FeedbackDocument,
+} from '../database/schemas/feedback.schema';
 import {
   FeedbackRepository,
   IFeedback,
@@ -59,7 +62,8 @@ export class MongoFeedbackRepository implements FeedbackRepository {
   ): Promise<IFeedback | null> {
     const updateData: Record<string, unknown> = {};
     if (data.type) updateData.type = data.type;
-    if (data.predefinedOption) updateData.predefinedOption = data.predefinedOption;
+    if (data.predefinedOption)
+      updateData.predefinedOption = data.predefinedOption;
     if (data.comment) updateData.comment = data.comment;
 
     const feedback = await this.feedbackModel.findByIdAndUpdate(

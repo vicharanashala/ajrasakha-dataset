@@ -30,6 +30,9 @@ export interface FeedbackRepository {
   ): Promise<IFeedback | null>;
   findByQuestionId(questionId: string): Promise<IFeedback[]>;
   findByUserId(userId: string): Promise<IFeedback[]>;
-  update(id: string, data: Partial<CreateFeedbackDto>): Promise<IFeedback | null>;
+  update(
+    id: string,
+    data: Partial<CreateFeedbackDto>,
+  ): Promise<IFeedback | null>;
   delete(id: string): Promise<boolean>;
 }

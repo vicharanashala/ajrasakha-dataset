@@ -26,7 +26,8 @@ export type QuestionStatus =
 
 export type IQuestionPriority = 'low' | 'medium' | 'high' | 'critical';
 
-export type QuestionSource = 'AJRASAKHA' | 'AGRI_EXPERT' | 'WHATSAPP' | 'OUTREACH';
+export type QuestionSource =
+  'AJRASAKHA' | 'AGRI_EXPERT' | 'WHATSAPP' | 'OUTREACH';
 
 @Schema({
   collection: 'questions',

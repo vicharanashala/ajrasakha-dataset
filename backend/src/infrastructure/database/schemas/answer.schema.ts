@@ -32,7 +32,8 @@ export class PreviousAnswersItem {
   modifiedBy: string;
 }
 
-export const PreviousAnswersItemSchema = SchemaFactory.createForClass(PreviousAnswersItem);
+export const PreviousAnswersItemSchema =
+  SchemaFactory.createForClass(PreviousAnswersItem);
 
 @Schema({ timestamps: true })
 export class Answer {
@@ -76,10 +77,11 @@ export class Answer {
   embedding?: number[];
 }
 
-export type AnswerDocument = Answer & Document & {
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+export type AnswerDocument = Answer &
+  Document & {
+    createdAt?: Date;
+    updatedAt?: Date;
+  };
 
 export const AnswerSchema = SchemaFactory.createForClass(Answer);
 

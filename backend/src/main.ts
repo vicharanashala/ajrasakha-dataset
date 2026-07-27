@@ -8,7 +8,8 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Enable CORS for frontend communication
-  const corsOrigins = configService.get<string>('CORS_ORIGINS') ?? 'http://localhost:5173';
+  const corsOrigins =
+    configService.get<string>('CORS_ORIGINS') ?? 'http://localhost:5173';
   app.enableCors({
     origin: corsOrigins.split(',').map((o) => o.trim()),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',

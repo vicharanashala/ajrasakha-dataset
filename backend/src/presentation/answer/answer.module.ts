@@ -4,7 +4,10 @@ import { AnswerController } from './answer.controller';
 import { AnswerUseCase } from '../../application/use-cases/answer.use-case';
 import { ANSWER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { MongoAnswerRepository } from '../../infrastructure/persistence/mongo-answer.repository';
-import { Answer, AnswerSchema } from '../../infrastructure/database/schemas/answer.schema';
+import {
+  Answer,
+  AnswerSchema,
+} from '../../infrastructure/database/schemas/answer.schema';
 
 @Module({
   imports: [

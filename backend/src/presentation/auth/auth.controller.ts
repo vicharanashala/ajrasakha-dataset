@@ -1,10 +1,25 @@
-import { Controller, Post, Get, Put, Body, HttpCode, HttpStatus, Headers, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Headers,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
 import { SignupDto } from '../../application/dtos/signup.dto';
 import { SigninDto } from '../../application/dtos/signin.dto';
 import { VerifyOtpDto } from '../../application/dtos/verify-otp.dto';
 import { ResendOtpDto } from '../../application/dtos/resend-otp.dto';
-import { UpdateProfileDto, ChangePasswordDto, RequestPasswordResetDto, VerifyPasswordResetDto } from '../../application/dtos/update-profile.dto';
+import {
+  UpdateProfileDto,
+  ChangePasswordDto,
+  RequestPasswordResetDto,
+  VerifyPasswordResetDto,
+} from '../../application/dtos/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -57,10 +72,11 @@ export class AuthController {
 
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
-  async changePassword(
-    @Body() dto: ChangePasswordDto,
-  ) {
-    return this.authUseCases.changePassword(dto.currentPassword, dto.newPassword);
+  async changePassword(@Body() dto: ChangePasswordDto) {
+    return this.authUseCases.changePassword(
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   @Post('request-password-reset')
@@ -72,6 +88,10 @@ export class AuthController {
   @Post('verify-password-reset')
   @HttpCode(HttpStatus.OK)
   async verifyPasswordReset(@Body() dto: VerifyPasswordResetDto) {
-    return this.authUseCases.verifyPasswordReset(dto.email, dto.otp, dto.newPassword);
+    return this.authUseCases.verifyPasswordReset(
+      dto.email,
+      dto.otp,
+      dto.newPassword,
+    );
   }
 }

@@ -14,7 +14,8 @@ export class AnswerUseCase {
   }
 
   async getQuestionWithAnswer(questionId: string) {
-    const answer = await this.answerRepository.findByQuestionIdAndFinal(questionId);
+    const answer =
+      await this.answerRepository.findByQuestionIdAndFinal(questionId);
     return { answer };
   }
 }

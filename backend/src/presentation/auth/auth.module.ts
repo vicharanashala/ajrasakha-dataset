@@ -12,7 +12,9 @@ import {
 import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: UserEntity.name, schema: UserSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: UserEntity.name, schema: UserSchema }]),
+  ],
   controllers: [AuthController],
   providers: [
     AuthUseCases,

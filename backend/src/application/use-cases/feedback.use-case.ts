@@ -36,7 +36,10 @@ export class FeedbackUseCase {
     questionId: string,
     userId: string,
   ): Promise<IFeedback | null> {
-    return this.feedbackRepository.findByQuestionIdAndUserId(questionId, userId);
+    return this.feedbackRepository.findByQuestionIdAndUserId(
+      questionId,
+      userId,
+    );
   }
 
   async getQuestionFeedbacks(questionId: string): Promise<IFeedback[]> {

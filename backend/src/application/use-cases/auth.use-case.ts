@@ -23,7 +23,10 @@ export class AuthUseCases {
     private readonly emailService: EmailService,
   ) {}
 
-  async signup(email: string, password: string): Promise<{ message: string; email: string }> {
+  async signup(
+    email: string,
+    password: string,
+  ): Promise<{ message: string; email: string }> {
     const normalizedEmail = email.toLowerCase();
 
     const existingUser = await this.userRepository.findByEmail(normalizedEmail);
@@ -57,7 +60,7 @@ export class AuthUseCases {
       }
     }
 
-    await this.emailService.sendOtp(normalizedEmail, otp);
+    await this.emailService.sendOtp(normalizedEmail, otp, 'signup');
 
     return {
       message: 'Account created. Please verify your email with the OTP sent.',
@@ -65,7 +68,10 @@ export class AuthUseCases {
     };
   }
 
-  async verifyOtp(email: string, otp: string): Promise<{ message: string; user: Partial<User> }> {
+  async verifyOtp(
+    email: string,
+    otp: string,
+  ): Promise<{ message: string; user: Partial<User> }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new BadRequestException('Invalid email or OTP');
@@ -83,7 +89,9 @@ export class AuthUseCases {
     }
 
     if (this.otpService.isExpired(user.otpExpiresAt)) {
-      throw new BadRequestException('OTP has expired. Please request a new one.');
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one.',
+      );
     }
 
     if (user.otp !== otp) {
@@ -120,19 +128,24 @@ export class AuthUseCases {
       otpExpiresAt,
     });
 
-    await this.emailService.sendOtp(user.email, otp);
+    await this.emailService.sendOtp(user.email, otp, 'signup');
 
     return { message: 'OTP has been resent to your email' };
   }
 
-  async signin(email: string, password: string): Promise<{ message: string; user: Partial<User> }> {
+  async signin(
+    email: string,
+    password: string,
+  ): Promise<{ message: string; user: Partial<User> }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
     if (!user.isVerified) {
-      throw new UnauthorizedException('Please verify your email before signing in');
+      throw new UnauthorizedException(
+        'Please verify your email before signing in',
+      );
     }
 
     const passwordHash = this.hashPassword(password);
@@ -189,13 +202,13 @@ export class AuthUseCases {
     );
   }
 
-  async requestPasswordReset(
-    email: string,
-  ): Promise<{ message: string }> {
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
     const user = await this.userRepository.findByEmail(email.toLowerCase());
     if (!user) {
       // Don't reveal that user doesn't exist
-      return { message: 'If the email exists, a password reset OTP has been sent' };
+      return {
+        message: 'If the email exists, a password reset OTP has been sent',
+      };
     }
 
     const otp = this.otpService.generateOtp();
@@ -206,9 +219,11 @@ export class AuthUseCases {
       otpExpiresAt,
     });
 
-    await this.emailService.sendOtp(user.email, otp);
+    await this.emailService.sendOtp(user.email, otp, 'reset');
 
-    return { message: 'If the email exists, a password reset OTP has been sent' };
+    return {
+      message: 'If the email exists, a password reset OTP has been sent',
+    };
   }
 
   async verifyPasswordReset(
@@ -226,7 +241,9 @@ export class AuthUseCases {
     }
 
     if (this.otpService.isExpired(user.otpExpiresAt)) {
-      throw new BadRequestException('OTP has expired. Please request a new one.');
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one.',
+      );
     }
 
     if (user.otp !== otp) {

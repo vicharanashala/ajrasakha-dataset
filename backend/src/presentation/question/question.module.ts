@@ -3,10 +3,19 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { QuestionController } from './question.controller';
 import { QuestionUseCase } from '../../application/use-cases/question.use-case';
 import { MongoQuestionRepository } from '../../infrastructure/persistence/mongo-question.repository';
-import { QuestionEntity, QuestionSchema } from '../../infrastructure/database/schemas/question.schema';
-import { QUESTION_REPOSITORY, FEEDBACK_REPOSITORY } from '../../domain/repositories/repository.tokens';
+import {
+  QuestionEntity,
+  QuestionSchema,
+} from '../../infrastructure/database/schemas/question.schema';
+import {
+  QUESTION_REPOSITORY,
+  FEEDBACK_REPOSITORY,
+} from '../../domain/repositories/repository.tokens';
 import { MongoFeedbackRepository } from '../../infrastructure/persistence/mongo-feedback.repository';
-import { Feedback, FeedbackSchema } from '../../infrastructure/database/schemas/feedback.schema';
+import {
+  Feedback,
+  FeedbackSchema,
+} from '../../infrastructure/database/schemas/feedback.schema';
 
 @Module({
   imports: [
