@@ -402,7 +402,7 @@ function App() {
         </Route>
 
         {/* Protected routes with header - all require authentication */}
-        <Route element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
+        <Route path="/*" element={<ProtectedRoute><ProtectedLayout /></ProtectedRoute>}>
           <Route path="/" element={<Navigate to="/questions" replace />} />
           <Route path="/questions" element={<Questions />} />
           <Route path="/questions/:id" element={<QuestionDetail />} />
