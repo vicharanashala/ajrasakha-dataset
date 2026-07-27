@@ -274,4 +274,18 @@ export class AuthUseCases {
     const { passwordHash, otp, otpExpiresAt, ...sanitized } = user;
     return sanitized;
   }
+
+  async generateTokenForUser(
+    userId: string,
+  ): Promise<{ token: string; user: Partial<User> }> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const token = this.jwtService.generateToken(user.id, user.email);
+    return {
+      token,
+      user: this.sanitizeUser(user),
+    };
+  }
 }

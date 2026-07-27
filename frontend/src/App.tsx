@@ -5,6 +5,7 @@ import {
   Route,
   useNavigate,
   Navigate,
+  useSearchParams,
 } from "react-router-dom";
 import { SignUp } from "./pages/SignUp";
 import { SignIn } from "./pages/SignIn";
@@ -200,6 +201,50 @@ function ProtectedLayout() {
   );
 }
 
+// Handle Google OAuth redirect
+function GoogleAuthSuccess() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  const userId = searchParams.get('userId');
+  const email = searchParams.get('email');
+  const error = searchParams.get('error');
+
+  useEffect(() => {
+    if (error) {
+      window.location.href = '/signin?error=google_auth_failed';
+      return;
+    }
+
+    if (token && userId && email) {
+      // Store token and user data
+      setToken(token);
+      const user = {
+        id: userId,
+        email: decodeURIComponent(email),
+        isVerified: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setUser(user);
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      // Redirect to questions page
+      window.location.href = '/questions';
+    } else {
+      window.location.href = '/signin?error=invalid_google_response';
+    }
+  }, []);
+
+  // Show loading state while redirecting
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Completing Google sign in...</p>
+      </div>
+    </div>
+  );
+}
+
 // Auth layout with header (no user menu)
 function AuthLayout() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -259,11 +304,13 @@ function AuthLayout() {
           <Route path="/signin" element={<SignInWrapper />} />
           <Route path="/signup" element={<SignUpWrapper />} />
           <Route path="/verify-otp" element={<VerifyOtpWrapper />} />
+          <Route path="/auth-success" element={<GoogleAuthSuccess />} />
         </Routes>
       </main>
     </div>
   );
 }
+
 
 // Wrapper components for auth pages
 function SignInWrapper() {

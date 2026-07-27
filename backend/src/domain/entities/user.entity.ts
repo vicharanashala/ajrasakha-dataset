@@ -8,6 +8,9 @@ export interface User {
   state?: string;
   otp?: string;
   otpExpiresAt?: Date;
+  googleId?: string;
+  avatar?: string;
+  authProvider?: 'email' | 'google';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,4 +18,9 @@ export interface User {
 export interface CreateUserProps {
   email: string;
   passwordHash: string;
+  firstName?: string;
+  lastName?: string;
+  googleId?: string;
+  avatar?: string;
+  isVerified?: boolean;
 }

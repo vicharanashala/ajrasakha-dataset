@@ -46,6 +46,20 @@ export class UserEntity {
   @Prop({ type: Date, required: false })
   otpExpiresAt?: Date;
 
+  @Prop({ type: String, required: false })
+  googleId?: string;
+
+  @Prop({ type: String, required: false })
+  avatar?: string;
+
+  @Prop({
+    type: String,
+    required: false,
+    enum: ['email', 'google'],
+    default: 'email',
+  })
+  authProvider?: string;
+
   // Provided by `timestamps: true`
   createdAt!: Date;
   updatedAt!: Date;

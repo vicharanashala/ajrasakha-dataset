@@ -64,13 +64,16 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           env_vars: |
             NODE_ENV=production
-            MONGODB_URI=${{ vars.MONGODB_URI }}
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
             MONGODB_DB_NAME=${{ vars.MONGODB_DB_NAME }}
             CORS_ORIGINS=${{ vars.CORS_ORIGINS }}
-            SMTP_HOST=${{ vars.SMTP_HOST }}
-            SMTP_PORT=${{ vars.SMTP_PORT }}
-            SMTP_USER=${{ vars.SMTP_USER }}
-            SMTP_PASS=${{ secrets.SMTP_PASS }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_EXPIRES_IN=${{ vars.JWT_EXPIRES_IN }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_CALLBACK_URL=${{ vars.GOOGLE_CALLBACK_URL }}
+            EMAIL_USER=${{ vars.EMAIL_USER }}
+            EMAIL_PASS=${{ secrets.EMAIL_PASS }}
             SMTP_FROM=${{ vars.SMTP_FROM }}
           env_vars_update_strategy: merge
           flags: --allow-unauthenticated

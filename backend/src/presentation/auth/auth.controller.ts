@@ -8,10 +8,13 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Res,
 } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
+import { Response } from 'express';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
+import { GoogleAuthGuard } from '../../infrastructure/auth/google-auth.guard';
 import { SignupDto } from '../../application/dtos/signup.dto';
 import { SigninDto } from '../../application/dtos/signin.dto';
 import { VerifyOtpDto } from '../../application/dtos/verify-otp.dto';
@@ -88,5 +91,30 @@ export class AuthController {
       dto.otp,
       dto.newPassword,
     );
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth() {
+    // Redirects to Google OAuth
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuthCallback(
+    @Req() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ) {
+    const user = req.user;
+    if (!user) {
+      return res.redirect(
+        `${process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173'}/signin?error=google_auth_failed`,
+      );
+    }
+    // Generate JWT token for the user
+    const result = await this.authUseCases.generateTokenForUser(user.id);
+    // Redirect to frontend with token
+    const redirectUrl = `${process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173'}/auth-success?token=${result.token}&userId=${user.id}&email=${encodeURIComponent(user.email)}`;
+    return res.redirect(redirectUrl);
   }
 }
