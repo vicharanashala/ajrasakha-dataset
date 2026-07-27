@@ -23,17 +23,20 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown } from "lucide-react";
+import { getToken, getUser, clearAuth, setToken, setUser } from "./services/api";
+
 
 const USER_STORAGE_KEY = "ajrasakha_user";
 
 // Protected route wrapper - redirects to signin if not authenticated
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-  if (!storedUser) {
+  const token = getToken();
+  if (!token) {
     return <Navigate to="/signin" replace />;
   }
   return <>{children}</>;
 }
+
 
 // Layout wrapper for protected routes (with header and user menu)
 function ProtectedLayout() {
@@ -60,10 +63,11 @@ function ProtectedLayout() {
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem(USER_STORAGE_KEY);
+    clearAuth();
     setShowLogoutDialog(false);
     window.location.href = '/signin';
   };
+
 
   const navigate = useNavigate();
 
@@ -263,18 +267,20 @@ function AuthLayout() {
 
 // Wrapper components for auth pages
 function SignInWrapper() {
-  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-  if (storedUser) {
+  const token = getToken();
+  if (token) {
     return <Navigate to="/questions" replace />;
   }
 
-  const handleSignedIn = (user: User) => {
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  const handleSignedIn = (user: User, token: string) => {
+    setToken(token);
+    setUser(user);
     window.location.href = '/questions';
   };
 
   return <SignIn onSwitchToSignUp={() => window.location.href = '/signup'} onSignedIn={handleSignedIn} />;
 }
+
 
 function SignUpWrapper() {
   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
@@ -293,7 +299,7 @@ function SignUpWrapper() {
 function VerifyOtpWrapper() {
   const pendingEmail = localStorage.getItem('ajrasakha_pending_email') || '';
 
-  const handleVerified = (user: { id: string; email: string }) => {
+  const handleVerified = (user: { id: string; email: string }, token?: string) => {
     localStorage.removeItem('ajrasakha_pending_email');
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
       ...user,
@@ -301,8 +307,13 @@ function VerifyOtpWrapper() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
+    // Store JWT token if provided
+    if (token) {
+      setToken(token);
+    }
     window.location.href = '/questions';
   };
+
 
   if (!pendingEmail) {
     return <Navigate to="/signup" replace />;
@@ -310,6 +321,7 @@ function VerifyOtpWrapper() {
 
   return <VerifyOtp email={pendingEmail} onVerified={handleVerified} onBack={() => window.location.href = '/signup'} />;
 }
+
 
 function App() {
   return (

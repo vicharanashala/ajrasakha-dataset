@@ -15,9 +15,10 @@ import { cn } from '@/lib/utils';
 
 interface VerifyOtpProps {
   email: string;
-  onVerified: (user: { id: string; email: string }) => void;
+  onVerified: (user: { id: string; email: string }, token?: string) => void;
   onBack: () => void;
 }
+
 
 const OTP_LENGTH = 6;
 
@@ -82,7 +83,10 @@ export function VerifyOtp({ email, onVerified, onBack }: VerifyOtpProps) {
     try {
       const response = await authService.verifyOtp({ email, otp });
       if (response.user) {
-        onVerified({ id: response.user.id, email: response.user.email });
+        onVerified(
+          { id: response.user.id, email: response.user.email },
+          response.token
+        );
       }
     } catch (err: unknown) {
       const message =

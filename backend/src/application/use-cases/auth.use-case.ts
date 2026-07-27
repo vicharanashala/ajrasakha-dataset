@@ -11,6 +11,7 @@ import type { UserRepository } from '../../domain/repositories/user.repository.i
 import type { User } from '../../domain/entities/user.entity';
 import { OtpService } from '../../infrastructure/services/otp.service';
 import { EmailService } from '../../infrastructure/services/email.service';
+import { JwtService } from '../../infrastructure/auth/jwt.service';
 import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import type { UpdateProfileDto } from '../dtos/update-profile.dto';
 
@@ -21,6 +22,7 @@ export class AuthUseCases {
     private readonly userRepository: UserRepository,
     private readonly otpService: OtpService,
     private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async signup(
@@ -71,7 +73,7 @@ export class AuthUseCases {
   async verifyOtp(
     email: string,
     otp: string,
-  ): Promise<{ message: string; user: Partial<User> }> {
+  ): Promise<{ message: string; user: Partial<User>; token?: string }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new BadRequestException('Invalid email or OTP');
@@ -104,9 +106,13 @@ export class AuthUseCases {
       otpExpiresAt: undefined,
     });
 
+    // Generate JWT token for newly verified users
+    const token = this.jwtService.generateToken(updated!.id, updated!.email);
+
     return {
       message: 'Email verified successfully',
       user: this.sanitizeUser(updated!),
+      token,
     };
   }
 
@@ -136,7 +142,7 @@ export class AuthUseCases {
   async signin(
     email: string,
     password: string,
-  ): Promise<{ message: string; user: Partial<User> }> {
+  ): Promise<{ message: string; user: Partial<User>; token: string }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -153,9 +159,12 @@ export class AuthUseCases {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    const token = this.jwtService.generateToken(user.id, user.email);
+
     return {
       message: 'Signed in successfully',
       user: this.sanitizeUser(user),
+      token,
     };
   }
 

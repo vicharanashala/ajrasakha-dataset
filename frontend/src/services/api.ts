@@ -13,9 +13,49 @@ import type {
   CreateFeedbackDto,
   User,
   UpdateProfileRequest,
-  ChangePasswordRequest,
 } from '../types';
 
+const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
+
+// Get token from localStorage
+export const getToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY);
+};
+
+// Set token in localStorage
+export const setToken = (token: string): void => {
+  localStorage.setItem(TOKEN_KEY, token);
+};
+
+// Remove token from localStorage
+export const removeToken = (): void => {
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+// Get user from localStorage
+export const getUser = (): User | null => {
+  const userStr = localStorage.getItem(USER_KEY);
+  return userStr ? JSON.parse(userStr) : null;
+};
+
+// Set user in localStorage
+export const setUser = (user: User): void => {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+};
+
+// Remove user from localStorage
+export const removeUser = (): void => {
+  localStorage.removeItem(USER_KEY);
+};
+
+// Clear all auth data
+export const clearAuth = (): void => {
+  removeToken();
+  removeUser();
+};
+
+// Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   withCredentials: true,
@@ -23,6 +63,36 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Request interceptor to add JWT token
+api.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle token expiration
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      clearAuth();
+      // Optionally redirect to login
+      window.location.href = '/signin';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   signup: async (data: SignupRequest): Promise<AuthResponse> => {
@@ -32,11 +102,25 @@ export const authService = {
 
   signin: async (data: SigninRequest): Promise<AuthResponse> => {
     const response = await api.post('/auth/signin', data);
+    // Store token and user on successful login
+    if (response.data.token) {
+      setToken(response.data.token);
+    }
+    if (response.data.user) {
+      setUser(response.data.user);
+    }
     return response.data;
   },
 
   verifyOtp: async (data: VerifyOtpRequest): Promise<AuthResponse> => {
     const response = await api.post('/auth/verify-otp', data);
+    // Store token and user on successful OTP verification
+    if (response.data.token) {
+      setToken(response.data.token);
+    }
+    if (response.data.user) {
+      setUser(response.data.user);
+    }
     return response.data;
   },
 
@@ -45,17 +129,17 @@ export const authService = {
     return response.data;
   },
 
-  getProfile: async (userId: string): Promise<User> => {
-    const response = await api.get('/auth/profile', {
-      headers: { 'x-user-id': userId },
-    });
+  getProfile: async (): Promise<User> => {
+    const response = await api.get('/auth/profile');
     return response.data;
   },
 
-  updateProfile: async (userId: string, data: UpdateProfileRequest): Promise<User> => {
-    const response = await api.put('/auth/profile', data, {
-      headers: { 'x-user-id': userId },
-    });
+  updateProfile: async (data: UpdateProfileRequest): Promise<User> => {
+    const response = await api.put('/auth/profile', data);
+    // Update stored user with new profile data
+    if (response.data) {
+      setUser(response.data);
+    }
     return response.data;
   },
 
@@ -64,9 +148,17 @@ export const authService = {
     return response.data;
   },
 
-  verifyPasswordReset: async (data: ChangePasswordRequest): Promise<{ message: string }> => {
+  verifyPasswordReset: async (data: {
+    email: string;
+    otp: string;
+    newPassword: string;
+  }): Promise<{ message: string }> => {
     const response = await api.post('/auth/verify-password-reset', data);
     return response.data;
+  },
+
+  logout: (): void => {
+    clearAuth();
   },
 };
 
@@ -77,7 +169,7 @@ export const questionService = {
     limit: number = 20,
   ): Promise<PaginatedQuestions> => {
     const params = new URLSearchParams();
-    
+
     // Add filters
     if (filters.status) params.append('status', filters.status);
     if (filters.priority) params.append('priority', filters.priority);
@@ -86,8 +178,12 @@ export const questionService = {
     if (filters.crop) params.append('crop', filters.crop);
     if (filters.domain) params.append('domain', filters.domain);
     if (filters.search) params.append('search', filters.search);
-    if (filters.excludeUserFeedback) params.append('excludeUserFeedback', filters.excludeUserFeedback.toString());
-    
+    if (filters.excludeUserFeedback)
+      params.append(
+        'excludeUserFeedback',
+        filters.excludeUserFeedback.toString()
+      );
+
     // Add pagination
     params.append('page', page.toString());
     params.append('limit', limit.toString());
@@ -104,7 +200,7 @@ export const questionService = {
     const params = new URLSearchParams();
     params.append('embedding', embedding.join(','));
     params.append('limit', limit.toString());
-    
+
     if (filters?.status) params.append('status', filters.status);
     if (filters?.source) params.append('source', filters.source);
 
@@ -135,7 +231,9 @@ export const feedbackService = {
     questionId: string,
     userId: string,
   ): Promise<IFeedback | null> => {
-    const response = await api.get(`/feedbacks/question/${questionId}/user/${userId}`);
+    const response = await api.get(
+      `/feedbacks/question/${questionId}/user/${userId}`
+    );
     return response.data;
   },
 

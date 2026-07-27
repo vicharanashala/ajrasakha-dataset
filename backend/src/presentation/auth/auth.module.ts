@@ -5,6 +5,8 @@ import { AuthUseCases } from '../../application/use-cases/auth.use-case';
 import { MongoUserRepository } from '../../infrastructure/persistence/mongo-user.repository';
 import { OtpService } from '../../infrastructure/services/otp.service';
 import { EmailService } from '../../infrastructure/services/email.service';
+import { JwtService } from '../../infrastructure/auth/jwt.service';
+import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 import {
   UserEntity,
   UserSchema,
@@ -21,6 +23,9 @@ import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
     { provide: USER_REPOSITORY, useClass: MongoUserRepository },
     OtpService,
     EmailService,
+    JwtService,
+    JwtAuthGuard,
   ],
+  exports: [JwtService, JwtAuthGuard],
 })
 export class AuthModule {}

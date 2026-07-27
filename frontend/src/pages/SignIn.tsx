@@ -16,8 +16,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SignInProps {
   onSwitchToSignUp: () => void;
-  onSignedIn: (user: User) => void;
+  onSignedIn: (user: User, token: string) => void;
 }
+
 
 export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
   const [email, setEmail] = useState('');
@@ -36,8 +37,8 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
 
     try {
       const response = await authService.signin({ email, password });
-      if (response.user) {
-        onSignedIn(response.user);
+      if (response.user && response.token) {
+        onSignedIn(response.user, response.token);
       } else {
         setError('Unexpected response from server.');
       }

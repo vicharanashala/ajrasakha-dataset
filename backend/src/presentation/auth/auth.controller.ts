@@ -6,20 +6,28 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  Headers,
-  UnauthorizedException,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
+import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 import { SignupDto } from '../../application/dtos/signup.dto';
 import { SigninDto } from '../../application/dtos/signin.dto';
 import { VerifyOtpDto } from '../../application/dtos/verify-otp.dto';
 import { ResendOtpDto } from '../../application/dtos/resend-otp.dto';
 import {
   UpdateProfileDto,
-  ChangePasswordDto,
   RequestPasswordResetDto,
   VerifyPasswordResetDto,
 } from '../../application/dtos/update-profile.dto';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    email: string;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -50,33 +58,20 @@ export class AuthController {
   }
 
   @Get('profile')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async getProfile(@Headers('x-user-id') userId: string) {
-    if (!userId) {
-      throw new UnauthorizedException('User ID required');
-    }
-    return this.authUseCases.getProfile(userId);
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    return this.authUseCases.getProfile(req.user.id);
   }
 
   @Put('profile')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async updateProfile(
-    @Headers('x-user-id') userId: string,
+    @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateProfileDto,
   ) {
-    if (!userId) {
-      throw new UnauthorizedException('User ID required');
-    }
-    return this.authUseCases.updateProfile(userId, dto);
-  }
-
-  @Post('change-password')
-  @HttpCode(HttpStatus.OK)
-  async changePassword(@Body() dto: ChangePasswordDto) {
-    return this.authUseCases.changePassword(
-      dto.currentPassword,
-      dto.newPassword,
-    );
+    return this.authUseCases.updateProfile(req.user.id, dto);
   }
 
   @Post('request-password-reset')

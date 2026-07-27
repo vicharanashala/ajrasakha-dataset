@@ -83,7 +83,9 @@ export interface AuthResponse {
   message: string;
   email?: string;
   user?: User;
+  token?: string;
 }
+
 
 export type AuthView = 'signin' | 'signup' | 'verify-otp';
 
