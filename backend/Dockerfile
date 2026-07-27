@@ -49,11 +49,9 @@ COPY --from=builder /app/dist ./dist
 # Copy built frontend from builder
 COPY --from=builder /app/frontend/dist ./frontend/dist
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
+# Create non-root user and change ownership
+RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001 && chown -R nestjs:nestjs /app
 
-# Change ownership of app directory
-RUN chown -R nestjs:nestjs /app
 USER nestjs
 
 # Set port (Cloud Run uses PORT env var, default to 8080)
