@@ -49,10 +49,9 @@ COPY --from=builder /app/dist ./dist
 # Copy built frontend from builder
 COPY --from=builder /app/frontend/dist ./frontend/dist
 
-# Create non-root user and change ownership
-RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001 && chown -R nestjs:nestjs /app
-
-USER nestjs
+# Create non-root user for security (optional - can be removed if issues persist)
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -u 1001 -G nodejs -s /bin/sh -D nestjs || true
 
 # Set port (Cloud Run uses PORT env var, default to 8080)
 ENV NODE_ENV=production
@@ -61,5 +60,5 @@ ENV PORT=8080
 # Expose port
 EXPOSE 8080
 
-# Start the application with explicit port
-CMD ["sh", "-c", "node dist/main"]
+# Start the application
+CMD ["node", "dist/main"]
