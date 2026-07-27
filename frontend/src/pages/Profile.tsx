@@ -44,14 +44,13 @@ export function Profile() {
       navigate('/signin');
       return;
     }
-    const parsedUser = JSON.parse(storedUser);
-    fetchProfile(parsedUser.id);
+    fetchProfile();
   }, [navigate]);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async () => {
     try {
       setLoading(true);
-      const profile = await authService.getProfile(userId);
+      const profile = await authService.getProfile();
       setUser(profile);
       setFirstName(profile.firstName || '');
       setLastName(profile.lastName || '');
@@ -72,7 +71,7 @@ export function Profile() {
       setError(null);
       setSuccess(null);
 
-      await authService.updateProfile(user.id, {
+      await authService.updateProfile({
         firstName: firstName || undefined,
         lastName: lastName || undefined,
         state: state || undefined,

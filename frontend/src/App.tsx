@@ -24,7 +24,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown } from "lucide-react";
-import { getToken, getUser, clearAuth, setToken, setUser } from "./services/api";
+import { getToken, clearAuth, setToken, setUser } from "./services/api";
 
 
 const USER_STORAGE_KEY = "ajrasakha_user";
