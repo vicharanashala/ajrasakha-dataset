@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
-import { UserRepository } from '../../domain/repositories/user.repository.interface';
+import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -29,7 +29,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const { id, emails, photos } = profile;
 
     if (!emails || !emails.length) {
-      return done(new UnauthorizedException('No email provided'), null);
+      return done(new UnauthorizedException('No email provided'), false);
     }
 
     const email = emails[0].value;

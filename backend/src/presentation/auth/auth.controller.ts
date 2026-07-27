@@ -10,8 +10,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import type { Request } from 'express';
-import { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 import { GoogleAuthGuard } from '../../infrastructure/auth/google-auth.guard';

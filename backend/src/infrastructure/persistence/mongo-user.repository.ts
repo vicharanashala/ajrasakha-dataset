@@ -88,7 +88,7 @@ export class MongoUserRepository implements UserRepository {
       otpExpiresAt: plain.otpExpiresAt ?? undefined,
       googleId: plain.googleId ?? undefined,
       avatar: plain.avatar ?? undefined,
-      authProvider: plain.authProvider ?? undefined,
+      authProvider: (plain.authProvider as 'email' | 'google') ?? undefined,
       createdAt: plain.createdAt,
       updatedAt: plain.updatedAt,
     };

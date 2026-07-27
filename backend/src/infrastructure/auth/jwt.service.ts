@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 export interface JwtPayload {
   sub: string;
@@ -10,7 +10,7 @@ export interface JwtPayload {
 @Injectable()
 export class JwtService {
   private readonly secret: string;
-  private readonly expiresIn: string;
+  private readonly expiresIn: string | number;
 
   constructor(private readonly configService: ConfigService) {
     this.secret =
@@ -25,9 +25,11 @@ export class JwtService {
       email: email,
     };
 
-    return jwt.sign(payload, this.secret, {
-      expiresIn: this.expiresIn,
-    });
+    const options: SignOptions = {
+      expiresIn: this.expiresIn as jwt.SignOptions['expiresIn'],
+    };
+
+    return jwt.sign(payload, this.secret, options);
   }
 
   verifyToken(token: string): JwtPayload {
