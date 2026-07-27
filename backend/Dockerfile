@@ -27,6 +27,8 @@ COPY frontend/index.html ./
 COPY frontend/vite.config.ts ./
 COPY frontend/tsconfig.json ./
 COPY frontend/public ./public
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
 # Go back to backend directory for final image

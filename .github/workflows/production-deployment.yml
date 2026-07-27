@@ -55,6 +55,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE }}:production
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE }}:production-${{ steps.generate-tags.outputs.short_sha }}
+          build-args: |
+            VITE_API_URL=${{ vars.VITE_API_URL }}
 
   deploy_production:
     name: Deploy to Cloud Run (Production)
