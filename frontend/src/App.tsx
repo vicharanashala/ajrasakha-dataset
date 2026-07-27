@@ -56,7 +56,7 @@ function Header({
       <div className="relative flex items-center justify-between px-6 py-2.5">
         {/* Logo - left corner */}
         <div className="flex items-center gap-3 h-12">
-          <img src="/annam-logo.png" alt="Annam Logo" className="h-12 w-auto" />
+          <img src="/annam-logo.png" alt="Annam Logo" className="h-18 w-auto" />
         </div>
 
         {/* Title - absolutely centered */}
