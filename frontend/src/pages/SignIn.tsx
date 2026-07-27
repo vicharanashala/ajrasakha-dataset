@@ -25,6 +25,7 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleGoogleSignin = () => {
     // Redirect to backend Google OAuth endpoint
@@ -34,8 +35,13 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting) return;
+    
     setError(null);
     setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const response = await authService.signin({ email, password });
@@ -45,12 +51,28 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
         setError('Unexpected response from server.');
       }
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || 'Failed to sign in. Please check your credentials.';
-      setError(message);
+      // Type guard for axios error
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+        const data = axiosError.response?.data;
+        if (data && typeof data === 'object' && 'message' in data) {
+          const msg = data.message;
+          if (Array.isArray(msg)) {
+            setError(msg[0] || 'Failed to sign in. Please check your credentials.');
+          } else if (typeof msg === 'string') {
+            setError(msg);
+          } else {
+            setError('Failed to sign in. Please check your credentials.');
+          }
+        } else {
+          setError('Failed to sign in. Please check your credentials.');
+        }
+      } else {
+        setError('Failed to sign in. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -137,7 +159,7 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
             />
           </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
+          <Button type="submit" disabled={loading} className="w-full" onClick={(e) => e.stopPropagation()}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
