@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/atoms/pagination';
-import { AlertCircle, Loader2, Search, MapPin, Leaf, X, MessageCircle } from 'lucide-react';
+import { AlertCircle, Loader2, Search, MapPin, Leaf, X } from 'lucide-react';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
 
@@ -514,16 +514,6 @@ export function Questions() {
   const [filters, setFilters] = useState<QuestionFilters>({ status: 'closed' as const });
   const [searchInput, setSearchInput] = useState('');
   const [limit, setLimit] = useState(20);
-  const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
-  const [showPendingFeedback, setShowPendingFeedback] = useState(false);
-
-  // Get current user from localStorage
-  useEffect(() => {
-    const storedUser = localStorage.getItem('ajrasakha_user');
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-    }
-  }, []);
 
   // Handle row click to navigate to question detail
   const handleRowClick = (questionId: string) => {
@@ -534,12 +524,7 @@ export function Questions() {
     try {
       setLoading(true);
       setError(null);
-      // Build filters with excludeUserFeedback if pending feedback filter is active
-      const queryFilters = {
-        ...filters,
-        excludeUserFeedback: showPendingFeedback && currentUser ? currentUser.id : undefined,
-      };
-      const result = await questionService.getAll(queryFilters, page, limit);
+      const result = await questionService.getAll(filters, page, limit);
       setQuestions(result.data);
       setPagination(result);
     } catch {
@@ -547,11 +532,7 @@ export function Questions() {
     } finally {
       setLoading(false);
     }
-  }, [filters, limit, showPendingFeedback, currentUser]);
-
-  useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);
+  }, [filters, limit]);
 
   // Debounced search
   useEffect(() => {
@@ -575,10 +556,9 @@ export function Questions() {
   const clearAllFilters = () => {
     setFilters({ status: 'closed' as const });
     setSearchInput('');
-    setShowPendingFeedback(false);
   };
 
-  const hasActiveFilters = filters.state || filters.crop || filters.search || showPendingFeedback;
+  const hasActiveFilters = filters.state || filters.crop || filters.search;
 
   const handlePageChange = (newPage: number) => {
     if (pagination && newPage >= 1 && newPage <= pagination.totalPages) {
@@ -665,21 +645,6 @@ export function Questions() {
               </button>
             )}
           </div>
-
-          {/* Pending Feedback Filter */}
-          {currentUser && (
-            <button
-              onClick={() => setShowPendingFeedback(!showPendingFeedback)}
-              className={`flex items-center gap-2 h-9 px-3 rounded-md border text-sm transition-colors ${
-                showPendingFeedback
-                  ? 'bg-primary/10 border-primary/50 text-primary'
-                  : 'border-border hover:border-muted-foreground/50 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <MessageCircle className="h-4 w-4" />
-              Pending Feedback
-            </button>
-          )}
 
           {/* Clear All */}
           {hasActiveFilters && (
