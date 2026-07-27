@@ -374,6 +374,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Google OAuth callback - must be outside AuthLayout to work */}
+        <Route path="/auth-success" element={<GoogleAuthSuccess />} />
+
         {/* Auth routes without header */}
         <Route element={<AuthLayout />}>
           <Route path="/signin" element={<SignInWrapper />} />
