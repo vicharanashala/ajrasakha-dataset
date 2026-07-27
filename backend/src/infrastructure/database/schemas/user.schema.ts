@@ -25,8 +25,8 @@ export class UserEntity {
   })
   email!: string;
 
-  @Prop({ type: String, required: true })
-  passwordHash!: string;
+  @Prop({ type: String, required: false })
+  passwordHash?: string;
 
   @Prop({ type: Boolean, required: true, default: false })
   isVerified!: boolean;

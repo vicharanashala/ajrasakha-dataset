@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   isVerified: boolean;
   firstName?: string;
   lastName?: string;
@@ -17,7 +17,7 @@ export interface User {
 
 export interface CreateUserProps {
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   firstName?: string;
   lastName?: string;
   googleId?: string;

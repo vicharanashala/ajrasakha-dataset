@@ -43,8 +43,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
     if (!user) {
       // Create new user from Google OAuth
-      // Note: passwordHash is required, but for Google users we set it to empty
-      // In production, you might want to add a flag to indicate password-less auth
       user = await this.userRepository.create({
         email,
         passwordHash: '', // Google users don't need password
@@ -60,6 +58,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       const updates: Partial<typeof user> = {};
       if (!user.googleId) {
         updates.googleId = id;
+      }
+      // Also update authProvider to 'google' if it was previously 'email' (user linked Google)
+      if (user.authProvider !== 'google') {
+        updates.authProvider = 'google';
       }
       if (!user.avatar && avatar) {
         updates.avatar = avatar;
