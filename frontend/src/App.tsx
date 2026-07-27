@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown } from "lucide-react";
+import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut } from "lucide-react";
 import { getToken, clearAuth, setToken, setUser } from "./services/api";
 
 
@@ -50,67 +50,80 @@ function Header({
   onSignOut,
 }: HeaderProps) {
   const navigate = useNavigate();
-  
+
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-card shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-0 py-3">
-        <div className="flex items-center gap-3 h-10">
-          <img
-            src="/annam-logo.png"
-            alt="Annam Logo"
-            className="h-10 w-auto"
-          />
-          <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">
-            Ajrasakha Dataset
-          </h1>
+    <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
+      <div className="relative flex items-center justify-between px-6 py-2.5">
+        {/* Logo - left corner */}
+        <div className="flex items-center gap-3 h-12">
+          <img src="/annam-logo.png" alt="Annam Logo" className="h-12 w-auto" />
         </div>
-        <div className="flex items-center gap-4 pl-4">
+
+        {/* Title - absolutely centered */}
+        <h1 className="absolute left-1/2 -translate-x-1/2 text-lg sm:text-xl font-bold tracking-wide uppercase text-foreground leading-tight whitespace-nowrap">
+          Ajrasakha Dataset
+        </h1>
+
+        {/* Theme + Profile - right corner */}
+        <div className="flex items-center gap-2">
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded-md border border-border hover:bg-muted transition-colors"
+            className="p-2 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             aria-label="Toggle theme"
           >
             {isDarkMode ? (
-              <Sun className="h-4 w-4 text-foreground" />
+              <Sun className="h-4 w-4" />
             ) : (
-              <Moon className="h-4 w-4 text-foreground" />
+              <Moon className="h-4 w-4" />
             )}
           </button>
+
           {/* User Menu Dropdown - only shown when user is logged in */}
           {onToggleUserMenu && onNavigate && onSignOut && (
             <div className="relative">
               <Button
                 variant="outline"
                 onClick={onToggleUserMenu}
-                className="gap-2"
+                className="gap-2 pl-2.5 pr-3"
               >
-                <UserIcon className="h-4 w-4" />
-                {(() => {
-                  const stored = localStorage.getItem(USER_STORAGE_KEY);
-                  if (stored) {
-                    const user = JSON.parse(stored);
-                    return user?.firstName || user?.email?.split("@")[0] || "User";
-                  }
-                  return "User";
-                })()}
-                <ChevronDown className="h-4 w-4" />
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <UserIcon className="h-3.5 w-3.5" />
+                </span>
+                <span className="max-w-[100px] truncate">
+                  {(() => {
+                    const stored = localStorage.getItem(USER_STORAGE_KEY);
+                    if (stored) {
+                      const user = JSON.parse(stored);
+                      return (
+                        user?.firstName || user?.email?.split("@")[0] || "User"
+                      );
+                    }
+                    return "User";
+                  })()}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                    showUserMenu ? "rotate-180" : ""
+                  }`}
+                />
               </Button>
+
               {showUserMenu && (
                 <>
                   <div
                     className="fixed inset-0 z-40"
                     onClick={() => onToggleUserMenu()}
                   />
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg z-50">
-                    <div className="py-1">
+                  <div className="absolute right-0 mt-2 w-52 origin-top-right animate-in fade-in-0 zoom-in-95 rounded-lg border border-border bg-card shadow-lg z-50 overflow-hidden">
+                    <div className="py-1.5">
                       <button
                         onClick={() => {
                           navigate("/profile");
                           onToggleUserMenu();
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                        className="w-full px-3.5 py-2 text-left text-sm text-foreground hover:bg-muted flex items-center gap-2.5 transition-colors"
                       >
-                        <UserIcon className="h-4 w-4" />
+                        <UserIcon className="h-4 w-4 text-muted-foreground" />
                         Profile
                       </button>
                       <button
@@ -118,9 +131,9 @@ function Header({
                           navigate("/my-feedbacks");
                           onToggleUserMenu();
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2"
+                        className="w-full px-3.5 py-2 text-left text-sm text-foreground hover:bg-muted flex items-center gap-2.5 transition-colors"
                       >
-                        <MessageCircle className="h-4 w-4" />
+                        <MessageCircle className="h-4 w-4 text-muted-foreground" />
                         My Feedbacks
                       </button>
                       <hr className="my-1 border-border" />
@@ -129,8 +142,9 @@ function Header({
                           onSignOut();
                           onToggleUserMenu();
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-muted text-destructive flex items-center gap-2"
+                        className="w-full px-3.5 py-2 text-left text-sm text-destructive hover:bg-destructive/10 flex items-center gap-2.5 transition-colors"
                       >
+                        <LogOut className="h-4 w-4" />
                         Sign Out
                       </button>
                     </div>
