@@ -17,15 +17,22 @@ const DEFAULT_MONGODB_DB_NAME = 'ajraskha-dataset';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri:
+      useFactory: (config: ConfigService) => {
+        const uri =
           config.get<string>('MONGODB_URI') ??
-          `${DEFAULT_MONGODB_URI.replace(/\?.*$/, '')}/${DEFAULT_MONGODB_DB_NAME}?appName=chatbot`,
-        dbName:
-          config.get<string>('MONGODB_DB_NAME') ?? DEFAULT_MONGODB_DB_NAME,
-        serverSelectionTimeoutMS: 10000,
-        connectTimeoutMS: 10000,
-      }),
+          `${DEFAULT_MONGODB_URI.replace(/\?.*$/, '')}/${DEFAULT_MONGODB_DB_NAME}?appName=chatbot`;
+        console.log('MongoDB URI configured:', uri ? 'SET' : 'NOT SET');
+        return {
+          uri,
+          dbName:
+            config.get<string>('MONGODB_DB_NAME') ?? DEFAULT_MONGODB_DB_NAME,
+          serverSelectionTimeoutMS: 30000, // 30 seconds - longer for Cloud Run
+          connectTimeoutMS: 30000, // 30 seconds - longer for Cloud Run
+          socketTimeoutMS: 45000,
+          retryWrites: true,
+          retryAttempts: 3,
+        };
+      },
     }),
   ],
   exports: [MongooseModule],

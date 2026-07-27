@@ -20,14 +20,15 @@ async function bootstrap() {
   console.log('PORT:', process.env.PORT);
   console.log('NODE_ENV:', process.env.NODE_ENV);
   console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'SET' : 'NOT SET');
+  console.log('Timestamp:', new Date().toISOString());
 
   let app: NestExpressApplication;
   try {
-    console.log('Creating NestJS application...');
+    console.log('[1/4] Creating NestJS application...');
     app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'log', 'debug'],
     });
-    console.log('App module created successfully');
+    console.log('[2/4] App module created successfully');
   } catch (error) {
     console.error('Failed to create app:', error);
     process.exit(1);
@@ -84,10 +85,15 @@ async function bootstrap() {
   );
 
   const port = parseInt(process.env.PORT || '8080', 10);
-  console.log('Starting server on port:', port);
+  console.log('[3/4] Starting server on port:', port);
 
-  await app.listen(port);
-  console.log(`=== APP RUNNING ON http://0.0.0.0:${port} ===`);
-  console.log(`Cloud Run health check ready`);
+  // Listen on all interfaces for Cloud Run
+  await app.listen(port, '0.0.0.0');
+
+  // Get the actual URL
+  const serverUrl = app.getHttpServer().address();
+  console.log('[4/4] === APP RUNNING ON', serverUrl, '===');
+  console.log('Cloud Run health check ready - listening on port', port);
+  console.log('Startup completed at:', new Date().toISOString());
 }
 bootstrap();
