@@ -3,10 +3,70 @@ name: Production Deployment
 on:
   workflow_dispatch:
 
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  SERVICE_NAME: ajrasakha-dataset-production
+  REGION: asia-south1
+  SERVICE_ACCOUNT_NAME: ajrasakha-dataset-deployer
+
 jobs:
+  setup_gcp:
+    name: Setup GCP Service Account
+    runs-on: ubuntu-latest
+    outputs:
+      service_account_email: ${{ steps.create-sa.outputs.email }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create Service Account
+        id: create-sa
+        run: |
+          # Create service account if it doesn't exist
+          if ! gcloud iam service-accounts describe "$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" --project=$PROJECT_ID 2>/dev/null; then
+            gcloud iam service-accounts create $SERVICE_ACCOUNT_NAME \
+              --display-name="Ajrasakha Deployer" \
+              --project=$PROJECT_ID
+          fi
+          echo "email=$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
+
+      - name: Grant Cloud Run Admin role
+        run: |
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+            --role="roles/run.admin"
+
+      - name: Grant Service Account User role
+        run: |
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com" \
+            --role="roles/iam.serviceAccountUser"
+
+      - name: Create and download key
+        id: create-key
+        run: |
+          gcloud iam service-accounts keys create key.json \
+            --iam-account=$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com \
+            --project=$PROJECT_ID
+          echo "key=$(cat key.json | base64)" >> $GITHUB_OUTPUT
+
+      - name: Store key as secret
+        run: |
+          echo "${{ steps.create-key.outputs.key }}" | base64 -d > deployer-key.json
+          gh secret set GCP_SA_KEY --env production --file deployer-key.json || true
+
   build_and_deploy:
     name: Build & Deploy to Cloud Run
     runs-on: ubuntu-latest
+    needs: setup_gcp
     
     steps:
       - name: Checkout code
@@ -34,8 +94,8 @@ jobs:
           dockerfile: backend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/ajrasakha-app:production
-            ${{ secrets.DOCKERHUB_USERNAME }}/ajrasakha-app:production-${{ steps.generate-tags.outputs.short_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/ajrasakha-dataset:production
+            ${{ secrets.DOCKERHUB_USERNAME }}/ajrasakha-dataset:production-${{ steps.generate-tags.outputs.short_sha }}
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
@@ -47,9 +107,9 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy ajrasakha \
-            --image ${{ secrets.DOCKERHUB_USERNAME }}/ajrasakha-app:production-${{ steps.generate-tags.outputs.short_sha }} \
-            --region asia-south2 \
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ secrets.DOCKERHUB_USERNAME }}/ajrasakha-dataset:production-${{ steps.generate-tags.outputs.short_sha }} \
+            --region $REGION \
             --platform managed \
             --memory 512Mi \
             --cpu 1 \
