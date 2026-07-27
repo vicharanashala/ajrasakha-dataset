@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Environment (secrets)
+.env
+.env.local
+.env.*.local
+
+# Track .env.example
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# TypeScript build info
+*.tsbuildinfo
