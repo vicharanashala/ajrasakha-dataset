@@ -89,6 +89,5 @@ jobs:
             GOOGLE_CALLBACK_URL=${{ vars.GOOGLE_CALLBACK_URL }}
             EMAIL_USER=${{ vars.EMAIL_USER }}
             EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-            SMTP_FROM=${{ vars.SMTP_FROM }}
           env_vars_update_strategy: merge
           flags: --allow-unauthenticated
