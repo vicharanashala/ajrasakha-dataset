@@ -7,19 +7,17 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   try {
-    console.log('Starting application...');
+    console.log('=== APP STARTING ===');
     console.log('PORT:', process.env.PORT);
     console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('CORS_ORIGINS:', process.env.CORS_ORIGINS);
     
-    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-      logger: ['error', 'warn', 'log', 'debug'],
-    });
-    console.log('App module created');
+    console.log('Creating NestJS app...');
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
+    console.log('App module created successfully');
     
     const configService = app.get(ConfigService);
 
-    // Enable CORS for frontend communication
+    // Enable CORS
     const corsOrigins =
       configService.get<string>('CORS_ORIGINS') ?? 'http://localhost:5173';
     app.enableCors({
@@ -32,14 +30,14 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     // Serve static files from frontend/dist
-    app.useStaticAssets(join(__dirname, '..', 'frontend', 'dist'), {
+    const frontendDistPath = join(__dirname, '..', 'frontend', 'dist');
+    console.log('Frontend dist path:', frontendDistPath);
+    app.useStaticAssets(frontendDistPath, {
       prefix: '/',
     });
 
-    // SPA fallback: serve index.html for all non-API routes
-    const frontendDistPath = join(__dirname, '..', 'frontend', 'dist');
+    // SPA fallback
     app.use((req: any, res: any, next: any) => {
-      // Let API routes through, serve index.html for SPA routes
       if (req.path.startsWith('/api')) {
         next();
         return;
@@ -56,9 +54,10 @@ async function bootstrap() {
       }),
     );
 
-    const port = process.env.PORT ?? 8080;
+    const port = parseInt(process.env.PORT || '8080', 10);
+    console.log('Listening on port:', port);
     await app.listen(port);
-    console.log(`Application is running on: http://localhost:${port}`);
+    console.log(`=== APP RUNNING ON http://localhost:${port} ===`);
   } catch (error) {
     console.error('Failed to start application:', error);
     process.exit(1);

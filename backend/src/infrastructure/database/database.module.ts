@@ -23,6 +23,8 @@ const DEFAULT_MONGODB_DB_NAME = 'ajraskha-dataset';
           `${DEFAULT_MONGODB_URI.replace(/\?.*$/, '')}/${DEFAULT_MONGODB_DB_NAME}?appName=chatbot`,
         dbName:
           config.get<string>('MONGODB_DB_NAME') ?? DEFAULT_MONGODB_DB_NAME,
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
       }),
     }),
   ],
