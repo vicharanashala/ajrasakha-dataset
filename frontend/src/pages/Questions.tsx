@@ -513,7 +513,7 @@ export function Questions() {
   // Default filter to show only closed questions
   const [filters, setFilters] = useState<QuestionFilters>({ status: 'closed' as const });
   const [searchInput, setSearchInput] = useState('');
-  const [limit, setLimit] = useState(20);
+  const limit = 20;
 
   // Handle row click to navigate to question detail
   const handleRowClick = (questionId: string) => {
@@ -569,11 +569,6 @@ export function Questions() {
     if (pagination && newPage >= 1 && newPage <= pagination.totalPages) {
       fetchQuestions(newPage);
     }
-  };
-
-  const handleLimitChange = (newLimit: number) => {
-    setLimit(newLimit);
-    fetchQuestions(1);
   };
 
   return (
