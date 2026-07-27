@@ -53,6 +53,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         lastName,
         avatar,
         isVerified: true, // Google users are pre-verified
+        authProvider: 'google', // Mark as Google-authenticated user
       });
     } else {
       // Update existing user with Google info if needed

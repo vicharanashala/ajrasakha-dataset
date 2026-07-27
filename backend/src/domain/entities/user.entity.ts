@@ -23,4 +23,5 @@ export interface CreateUserProps {
   googleId?: string;
   avatar?: string;
   isVerified?: boolean;
+  authProvider?: 'email' | 'google';
 }

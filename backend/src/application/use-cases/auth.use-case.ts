@@ -148,6 +148,13 @@ export class AuthUseCases {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Check if user signed up with Google only (no password)
+    if (user.authProvider === 'google') {
+      throw new UnauthorizedException(
+        'This account was created using Google Sign-In. Please use the "Continue with Google" button to sign in.',
+      );
+    }
+
     if (!user.isVerified) {
       throw new UnauthorizedException(
         'Please verify your email before signing in',
