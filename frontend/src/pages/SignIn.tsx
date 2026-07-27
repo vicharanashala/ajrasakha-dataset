@@ -28,8 +28,8 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
 
   const handleGoogleSignin = () => {
     // Redirect to backend Google OAuth endpoint
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    window.location.href = `${backendUrl}/api/auth/google`;
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    window.location.href = `${backendUrl}/auth/google`;
   };
 
   const handleSubmit = async (e: FormEvent) => {
