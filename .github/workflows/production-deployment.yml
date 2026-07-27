@@ -2,6 +2,16 @@ name: Production Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - build
+          - deploy
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -13,6 +23,7 @@ jobs:
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.action == 'all' || github.event.inputs.action == 'build' }}
     outputs:
       sha: ${{ steps.generate-tags.outputs.short_sha }}
     steps:
@@ -48,6 +59,7 @@ jobs:
     name: Deploy to Cloud Run (Production)
     needs: build
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.action == 'all' || github.event.inputs.action == 'deploy' }}
     
     steps:
       - name: Authenticate to Google Cloud
