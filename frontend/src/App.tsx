@@ -63,6 +63,8 @@ function ProtectedLayout() {
     }
   }, [isDarkMode]);
 
+  const navigate = useNavigate();
+
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
   };
@@ -72,9 +74,6 @@ function ProtectedLayout() {
     setShowLogoutDialog(false);
     navigate('/signin');
   };
-
-
-  const navigate = useNavigate();
 
   return (
     <>

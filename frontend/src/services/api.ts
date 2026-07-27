@@ -53,6 +53,8 @@ export const removeUser = (): void => {
 export const clearAuth = (): void => {
   removeToken();
   removeUser();
+  // Also clear the user key used in App.tsx
+  localStorage.removeItem('ajrasakha_user');
 };
 
 // Create axios instance
