@@ -1,11 +1,13 @@
 version: '3.8'
 
 services:
-  backend:
+  app:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: ajrasakha-backend
+      context: .
+      dockerfile: backend/Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:3000
+    container_name: ajrasakha-app
     ports:
       - '3000:3000'
     environment:
@@ -13,27 +15,12 @@ services:
       - MONGODB_URI=${MONGODB_URI:-mongodb+srv://lpulga167_db_user:AlYI819Ba8Md1ly7@chatbot.icehz1c.mongodb.net?appName=chatbot}
       - MONGODB_DB_NAME=${MONGODB_DB_NAME:-agriai}
       - PORT=3000
-      - CORS_ORIGINS=http://localhost,http://localhost:80,http://localhost:3000,http://frontend:80
+      - CORS_ORIGINS=http://localhost:3000
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-your-email@gmail.com}
       - SMTP_PASS=${SMTP_PASS:-your-app-password}
       - SMTP_FROM=${SMTP_FROM:-Ajrasakha Dataset <noreply@ajrasakha.com>}
-    networks:
-      - ajrasakha-network
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=http://localhost:3000/api
-    container_name: ajrasakha-frontend
-    ports:
-      - '80:80'
-    depends_on:
-      - backend
     networks:
       - ajrasakha-network
     restart: unless-stopped
