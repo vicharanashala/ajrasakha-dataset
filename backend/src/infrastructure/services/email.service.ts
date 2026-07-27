@@ -15,18 +15,17 @@ export class EmailService {
   }
 
   private initializeTransporter(): void {
-    const smtpHost = this.configService.get<string>('SMTP_HOST');
-    const smtpPort = this.configService.get<number>('SMTP_PORT');
-    const smtpUser = this.configService.get<string>('SMTP_USER');
-    const smtpPass = this.configService.get<string>('SMTP_PASS');
+    const emailUser = this.configService.get<string>('EMAIL_USER');
+    const emailPass = this.configService.get<string>('EMAIL_PASS');
 
+    // Zoho SMTP configuration
     this.transporter = nodemailer.createTransport({
-      host: smtpHost || 'smtp.gmail.com',
-      port: smtpPort || 587,
-      secure: false,
+      host: 'smtp.zoho.in',
+      port: 465,
+      secure: true,
       auth: {
-        user: smtpUser || 'dummy@gmail.com',
-        pass: smtpPass || 'dummy-password',
+        user: emailUser,
+        pass: emailPass,
       },
     });
   }
@@ -39,7 +38,7 @@ export class EmailService {
     const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
     const smtpFrom = this.configService.get<string>(
       'SMTP_FROM',
-      'Ajrasakha Dataset <noreply@ajrasakha.com>',
+      'abiramk@annam.ai',
     );
 
     // In development mode, log the OTP to console instead of sending email
