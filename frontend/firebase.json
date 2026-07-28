@@ -1,0 +1,15 @@
+{
+  "hosting": {
+    "site": "ajrasakha-dataset-production",
+    "public": "public",
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "ajrasakha-dataset-production",
+          "region": "asia-south1"
+        }
+      }
+    ]
+  }
+}
