@@ -49,10 +49,10 @@ export class PublicController {
     @Headers('authorization') authHeader: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('state') state?: string,
-    @Query('crop') crop?: string,
-    @Query('district') district?: string,
-    @Query('domain') domain?: string,
+    @Query('state') state?: string | string[],
+    @Query('crop') crop?: string | string[],
+    @Query('district') district?: string | string[],
+    @Query('domain') domain?: string | string[],
   ) {
     await this.validateApiKey(authHeader);
 

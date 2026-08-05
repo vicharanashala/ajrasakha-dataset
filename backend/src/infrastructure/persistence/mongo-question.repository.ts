@@ -19,6 +19,20 @@ export class MongoQuestionRepository implements QuestionRepository {
     private readonly questionModel: Model<QuestionEntityDocument>,
   ) {}
 
+  /**
+   * Normalize a filter value that may be a comma-separated string into an array.
+   * E.g. "West Bengal,Maharashtra" -> ["West Bengal", "Maharashtra"]
+   * "Maharashtra" -> ["Maharashtra"]
+   * ["Maharashtra"] -> ["Maharashtra"] (unchanged)
+   */
+  private toArray(value: string | string[]): string[] {
+    if (Array.isArray(value)) return value;
+    return value
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+
   async findAll(
     filters: QuestionFilters,
     page: number,
@@ -38,16 +52,24 @@ export class MongoQuestionRepository implements QuestionRepository {
       query.source = filters.source;
     }
     if (filters.state) {
-      query['details.state'] = { $regex: filters.state, $options: 'i' };
+      const states = this.toArray(filters.state);
+      query['details.state'] =
+        states.length === 1
+          ? { $regex: states[0], $options: 'i' }
+          : { $in: states };
     }
     if (filters.crop) {
-      query['details.crop'] = filters.crop;
+      query['details.crop'] = { $in: this.toArray(filters.crop) };
     }
     if (filters.district) {
-      query['details.district'] = filters.district;
+      query['details.district'] = { $in: this.toArray(filters.district) };
     }
     if (filters.domain) {
-      query['details.domain'] = { $regex: filters.domain, $options: 'i' };
+      const domains = this.toArray(filters.domain);
+      query['details.domain'] =
+        domains.length === 1
+          ? { $regex: domains[0], $options: 'i' }
+          : { $in: domains };
     }
     if (filters.search) {
       query.question = { $regex: filters.search, $options: 'i' };

@@ -284,10 +284,10 @@ export const apiKeyService = {
 };
 
 export interface PublicQuestionFilters {
-  state?: string;
-  crop?: string;
-  district?: string;
-  domain?: string;
+  state?: string | string[];
+  crop?: string | string[];
+  district?: string | string[];
+  domain?: string | string[];
 }
 
 export interface PublicQuestion {
@@ -308,8 +308,6 @@ export interface PublicQuestion {
       page?: string | number;
     }>;
   } | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface PaginatedPublicQuestions {
@@ -332,10 +330,18 @@ export const publicDatasetService = {
     limit: number = 20,
   ): Promise<PaginatedPublicQuestions> => {
     const searchParams = new URLSearchParams();
-    if (params.state) searchParams.set('state', params.state);
-    if (params.crop) searchParams.set('crop', params.crop);
-    if (params.district) searchParams.set('district', params.district);
-    if (params.domain) searchParams.set('domain', params.domain);
+
+    const addParam = (key: string, value: string | string[]) => {
+      const values = typeof value === 'string'
+        ? value.split(',').map((v) => v.trim()).filter(Boolean)
+        : value;
+      values.forEach((v) => searchParams.append(key, v));
+    };
+
+    if (params.state) addParam('state', params.state);
+    if (params.crop) addParam('crop', params.crop);
+    if (params.district) addParam('district', params.district);
+    if (params.domain) addParam('domain', params.domain);
     searchParams.set('page', String(page));
     searchParams.set('limit', String(limit));
 

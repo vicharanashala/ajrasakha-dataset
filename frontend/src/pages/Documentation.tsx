@@ -237,6 +237,7 @@ export function Documentation() {
   const [filtersLoading, setFiltersLoading] = useState(false);
   const [filtersError, setFiltersError] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [examplesExpanded, setExamplesExpanded] = useState(false);
   const [keyToRevoke, setKeyToRevoke] = useState<{ id: string; name?: string } | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>("api-keys");
 
@@ -619,9 +620,27 @@ export function Documentation() {
                           },
                           {
                             param: "state",
-                            type: "string",
+                            type: "string | string[]",
                             def: "—",
-                            desc: "Filter by Indian state",
+                            desc: "Filter by Indian state(s)",
+                          },
+                          {
+                            param: "crop",
+                            type: "string | string[]",
+                            def: "—",
+                            desc: "Filter by crop name(s)",
+                          },
+                          {
+                            param: "district",
+                            type: "string | string[]",
+                            def: "—",
+                            desc: "Filter by district(s)",
+                          },
+                          {
+                            param: "domain",
+                            type: "string | string[]",
+                            def: "—",
+                            desc: "Filter by domain(s) (e.g. pest, soil, irrigation)",
                           },
                         ].map((row, i, arr) => (
                           <tr
@@ -649,38 +668,61 @@ export function Documentation() {
 
                 {/* Example Requests */}
                 <div id="examples" className="space-y-3 scroll-mt-6">
-                  <p className="text-sm font-medium">Example Requests</p>
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                    {[
-                      {
-                        label: "Get all questions (first page)",
-                        code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?page=1&limit=20"`,
-                      },
-                      {
-                        label: "Filter by state and crop",
-                        code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?state=Maharashtra&crop=Rice"`,
-                      },
-                      {
-                        label: "Filter by multiple params",
-                        code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?state=Uttar%20Pradesh&crop=Wheat&limit=50"`,
-                      },
-                    ].map((ex) => (
-                      <div key={ex.label} className="space-y-1">
-                        <p className="text-xs text-muted-foreground">
-                          {ex.label}
-                        </p>
-                        <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-all">
-                          <code className="text-foreground whitespace-pre-wrap flex-1">
-                            {ex.code}
-                          </code>
-                          <CopyButton
-                            text={ex.code}
-                            className="shrink-0 mt-0.5"
-                          />
+                  <button
+                    onClick={() => setExamplesExpanded((v) => !v)}
+                    className="flex items-center gap-2 text-sm font-medium hover:text-foreground transition-colors w-full"
+                  >
+                    {examplesExpanded ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    )}
+                    Example Requests
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      (click to {examplesExpanded ? 'collapse' : 'expand'})
+                    </span>
+                  </button>
+                  {examplesExpanded && (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                      {[
+                        {
+                          label: "Get all questions (first page)",
+                          code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?page=1&limit=20"`,
+                        },
+                        {
+                          label: "Filter by single state",
+                          code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?state=Maharashtra"`,
+                        },
+                        {
+                          label: "Filter by multiple states (comma-separated)",
+                          code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?state=West%20Bengal,%20Maharashtra"`,
+                        },
+                        {
+                          label: "Filter by multiple states (repeated params)",
+                          code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?state=West%20Bengal&state=Maharashtra"`,
+                        },
+                        {
+                          label: "Filter by multiple crops and domains",
+                          code: `curl -H "Authorization: Bearer YOUR_API_KEY" "${apiUrl}?crop=Rice,%20Wheat&domain=pest,%20irrigation"`,
+                        },
+                      ].map((ex) => (
+                        <div key={ex.label} className="space-y-1">
+                          <p className="text-xs text-muted-foreground">
+                            {ex.label}
+                          </p>
+                          <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-all">
+                            <code className="text-foreground whitespace-pre-wrap flex-1">
+                              {ex.code}
+                            </code>
+                            <CopyButton
+                              text={ex.code}
+                              className="shrink-0 mt-0.5"
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Response Shape */}
@@ -700,9 +742,7 @@ export function Documentation() {
       "answer": {
         "answer": "string",
         "sources": [{ "source": "url", "sourceType": "web", "sourceName": "..." }]
-      },
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      }
     }
   ],
   "total": 1000,

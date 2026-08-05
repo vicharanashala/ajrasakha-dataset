@@ -11,10 +11,10 @@ import { ANSWER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { QuestionEntity, QuestionEntityDocument, QuestionStatus } from '../../infrastructure/database/schemas/question.schema';
 
 export interface PublicQuestionFilters {
-  state?: string;
-  crop?: string;
-  district?: string;
-  domain?: string;
+  state?: string | string[];
+  crop?: string | string[];
+  district?: string | string[];
+  domain?: string | string[];
 }
 
 export interface PublicQuestion {
@@ -35,15 +35,10 @@ export interface PublicQuestion {
       page?: string | number;
     }>;
   } | null;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface AvailableFilters {
   states: string[];
-  districts: string[];
-  crops: string[];
-  domains: string[];
 }
 
 export interface PaginatedPublicQuestions {
@@ -116,8 +111,6 @@ export class PublicDatasetUseCase {
         domain: q.details?.domain,
       },
       answer: answerMap.get(q.id) ?? null,
-      createdAt: q.createdAt instanceof Date ? q.createdAt.toISOString() : String(q.createdAt),
-      updatedAt: q.updatedAt instanceof Date ? q.updatedAt.toISOString() : String(q.updatedAt),
     }));
 
     return {
@@ -132,21 +125,12 @@ export class PublicDatasetUseCase {
   async getAvailableFilters(): Promise<AvailableFilters> {
     const closedFilter = { status: 'closed' as QuestionStatus };
 
-    const [states, districts, crops, domains] = await Promise.all([
+    const [states] = await Promise.all([
       this.questionModel.distinct('details.state', closedFilter).exec(),
-      this.questionModel.distinct('details.district', closedFilter).exec(),
-      this.questionModel.distinct('details.crop', closedFilter).exec(),
-      this.questionModel.distinct('details.domain', closedFilter).exec(),
     ]);
-
-    // domains may be arrays of strings inside documents; flatten if needed
-    const allDomains = domains.flatMap((d) => (Array.isArray(d) ? d : [d]));
 
     return {
       states: states.filter(Boolean).sort() as string[],
-      districts: districts.filter(Boolean).sort() as string[],
-      crops: crops.filter(Boolean).sort() as string[],
-      domains: [...new Set(allDomains.filter(Boolean))].sort() as string[],
     };
   }
 }

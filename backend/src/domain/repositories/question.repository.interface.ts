@@ -38,10 +38,10 @@ export interface QuestionFilters {
   status?: QuestionStatus;
   priority?: IQuestionPriority;
   source?: QuestionSource;
-  state?: string;
-  district?: string;
-  crop?: string;
-  domain?: string;
+  state?: string | string[];
+  district?: string | string[];
+  crop?: string | string[];
+  domain?: string | string[];
   search?: string;
 }
 
