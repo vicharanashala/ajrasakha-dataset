@@ -26,7 +26,8 @@ export function SignUp({ onSwitchToSignIn, onSignupSuccess }: SignUpProps) {
   const [error, setError] = useState<string | null>(null);
 
   const handleGoogleSignup = () => {
-    setError('Google sign-up is coming soon. Please use email & password for now.');
+    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    window.location.href = `${backendUrl}/auth/google`;
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -74,8 +75,6 @@ export function SignUp({ onSwitchToSignIn, onSignupSuccess }: SignUpProps) {
           type="button"
           variant="outline"
           onClick={handleGoogleSignup}
-          disabled
-          aria-disabled="true"
           className="w-full"
         >
           <svg
@@ -101,7 +100,7 @@ export function SignUp({ onSwitchToSignIn, onSignupSuccess }: SignUpProps) {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Continue with Google (coming soon)
+          Continue with Google
         </Button>
 
         <div className="relative">

@@ -42,6 +42,7 @@ interface HeaderProps {
   onSignOut?: () => void;
   showLogoutDialog?: boolean;
   onShowLogoutDialog?: (show: boolean) => void;
+  showDocs?: boolean;
 }
 
 function Header({
@@ -51,6 +52,7 @@ function Header({
   onToggleUserMenu,
   onNavigate,
   onSignOut,
+  showDocs = true,
 }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,18 +75,20 @@ function Header({
 
         {/* Theme + Profile - right corner */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate("/documentation")}
-            className={`p-2 rounded-md border transition-colors ${
-              isDocs
-                ? "border-primary/50 bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-            aria-label="API Documentation"
-            title="API Documentation"
-          >
-            <BookOpen className="h-4 w-4" />
-          </button>
+          {showDocs && (
+            <button
+              onClick={() => navigate("/documentation")}
+              className={`p-2 rounded-md border transition-colors ${
+                isDocs
+                  ? "border-primary/50 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+              aria-label="API Documentation"
+              title="API Documentation"
+            >
+              <BookOpen className="h-4 w-4" />
+            </button>
+          )}
 
           <button
             onClick={onToggleTheme}
@@ -349,6 +353,7 @@ function AuthLayout() {
       <Header
         isDarkMode={isDarkMode}
         onToggleTheme={toggleTheme}
+        showDocs={false}
       />
       <main className="flex flex-1 items-center justify-center px-4 py-12">
         <Routes>
