@@ -6,6 +6,7 @@ export interface User {
   state?: string;
   isVerified: boolean;
   avatar?: string;
+  authProvider?: string;
   createdAt: string;
   updatedAt: string;
 }

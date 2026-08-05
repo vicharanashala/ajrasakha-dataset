@@ -242,6 +242,12 @@ export class AuthUseCases {
       };
     }
 
+    if (user.authProvider === 'google') {
+      throw new BadRequestException(
+        'Google Sign-In accounts do not have a password. Please use "Continue with Google" to sign in.',
+      );
+    }
+
     const otp = this.otpService.generateOtp();
     const otpExpiresAt = this.otpService.getExpiry();
 
@@ -265,6 +271,12 @@ export class AuthUseCases {
     const user = await this.userRepository.findByEmail(email.toLowerCase());
     if (!user) {
       throw new BadRequestException('Invalid email or OTP');
+    }
+
+    if (user.authProvider === 'google') {
+      throw new BadRequestException(
+        'Google Sign-In accounts do not have a password. Please use "Continue with Google" to sign in.',
+      );
     }
 
     if (!user.otp || !user.otpExpiresAt) {

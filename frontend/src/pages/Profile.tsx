@@ -265,121 +265,123 @@ export function Profile() {
           </CardContent>
         </Card>
 
-        {/* Password Reset Card */}
-        <Card className="shadow-sm border-border/50">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Lock className="h-5 w-5" />
-              Change Password
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!showPasswordReset ? (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Reset your password by receiving an OTP on your registered email ({email})
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPasswordReset(true)}
-                  className="w-full"
-                >
-                  <Lock className="h-4 w-4 mr-2" />
-                  Reset Password
-                </Button>
-              </div>
-            ) : !otpSent ? (
-              <div className="space-y-4">
+        {/* Password Reset Card — hidden for Google SSO users */}
+        {user?.authProvider !== 'google' && (
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Change Password
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!showPasswordReset ? (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    OTP will be sent to
-                  </label>
-                  <Input value={email} disabled className="bg-muted/50" />
-                </div>
-                <Button
-                  onClick={handleRequestPasswordReset}
-                  disabled={resetting}
-                  className="w-full"
-                >
-                  {resetting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Sending OTP...
-                    </>
-                  ) : (
-                    'Send OTP'
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={handleCancelReset}
-                  className="w-full text-muted-foreground"
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Enter OTP
-                  </label>
-                  <Input
-                    value={resetOtp}
-                    onChange={(e) => setResetOtp(e.target.value)}
-                    placeholder="Enter the OTP sent to your email"
-                    maxLength={6}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    New Password
-                  </label>
-                  <Input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                  />
-                </div>
-                <div className="flex gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    Reset your password by receiving an OTP on your registered email ({email})
+                  </p>
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setOtpSent(false);
-                      setResetOtp('');
-                      setNewPassword('');
-                    }}
-                    disabled={resetting}
+                    onClick={() => setShowPasswordReset(true)}
+                    className="w-full"
                   >
-                    Back
+                    <Lock className="h-4 w-4 mr-2" />
+                    Reset Password
                   </Button>
+                </div>
+              ) : !otpSent ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      OTP will be sent to
+                    </label>
+                    <Input value={email} disabled className="bg-muted/50" />
+                  </div>
                   <Button
-                    onClick={handleVerifyPasswordReset}
-                    disabled={resetting || !resetOtp || !newPassword}
-                    className="flex-1"
+                    onClick={handleRequestPasswordReset}
+                    disabled={resetting}
+                    className="w-full"
                   >
                     {resetting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Resetting...
+                        Sending OTP...
                       </>
                     ) : (
-                      'Reset Password'
+                      'Send OTP'
                     )}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleCancelReset}
+                    className="w-full text-muted-foreground"
+                  >
+                    Cancel
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  onClick={handleCancelReset}
-                  className="w-full text-muted-foreground"
-                >
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      Enter OTP
+                    </label>
+                    <Input
+                      value={resetOtp}
+                      onChange={(e) => setResetOtp(e.target.value)}
+                      placeholder="Enter the OTP sent to your email"
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      New Password
+                    </label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setOtpSent(false);
+                        setResetOtp('');
+                        setNewPassword('');
+                      }}
+                      disabled={resetting}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      onClick={handleVerifyPasswordReset}
+                      disabled={resetting || !resetOtp || !newPassword}
+                      className="flex-1"
+                    >
+                      {resetting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Resetting...
+                        </>
+                      ) : (
+                        'Reset Password'
+                      )}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    onClick={handleCancelReset}
+                    className="w-full text-muted-foreground"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
