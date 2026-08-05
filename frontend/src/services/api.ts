@@ -322,9 +322,6 @@ export interface PaginatedPublicQuestions {
 
 export interface AvailableFilters {
   states: string[];
-  districts: string[];
-  crops: string[];
-  domains: string[];
 }
 
 export const publicDatasetService = {

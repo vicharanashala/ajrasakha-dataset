@@ -33,6 +33,9 @@ npm-debug.log*
 # Test coverage
 coverage/
 
+# MongoDB scripts (contain DB-specific queries)
+mongo_queries/
+
 # Temporary files
 tmp/
 temp/

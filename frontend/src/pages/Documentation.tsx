@@ -24,10 +24,7 @@ import {
   ChevronRight,
   BookOpen,
   Hash,
-  Globe,
-  Leaf,
   MapPin,
-  Tag,
   Terminal,
   RefreshCw,
   ArrowLeft,
@@ -318,7 +315,7 @@ export function Documentation() {
       setNewKey(key);
       setNewKeyModalOpen(true);
       setActiveKey(key.key);
-      setFilters({ states: [], districts: [], crops: [], domains: [] });
+      setFilters({ states: [] });
       // Refresh key list
       await fetchApiKeys();
       setKeyName("");
@@ -626,24 +623,6 @@ export function Documentation() {
                             def: "—",
                             desc: "Filter by Indian state",
                           },
-                          {
-                            param: "crop",
-                            type: "string",
-                            def: "—",
-                            desc: "Filter by crop name",
-                          },
-                          {
-                            param: "district",
-                            type: "string",
-                            def: "—",
-                            desc: "Filter by district",
-                          },
-                          {
-                            param: "domain",
-                            type: "string",
-                            def: "—",
-                            desc: "Filter by domain (e.g. pest, soil, irrigation)",
-                          },
                         ].map((row, i, arr) => (
                           <tr
                             key={row.param}
@@ -784,28 +763,11 @@ export function Documentation() {
                     </Alert>
                   ) : (
                     filters && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-                        <FilterSection
-                          title="States"
-                          icon={<MapPin className="h-4 w-4" />}
-                          values={filters.states}
-                        />
-                        <FilterSection
-                          title="Crops"
-                          icon={<Leaf className="h-4 w-4" />}
-                          values={filters.crops}
-                        />
-                        <FilterSection
-                          title="Districts"
-                          icon={<Globe className="h-4 w-4" />}
-                          values={filters.districts}
-                        />
-                        <FilterSection
-                          title="Domains"
-                          icon={<Tag className="h-4 w-4" />}
-                          values={filters.domains}
-                        />
-                      </div>
+                      <FilterSection
+                        title="States"
+                        icon={<MapPin className="h-4 w-4" />}
+                        values={filters.states}
+                      />
                     )
                   )}
                 </div>
