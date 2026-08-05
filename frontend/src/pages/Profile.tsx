@@ -84,7 +84,7 @@ export function Profile() {
         const parsed = JSON.parse(storedUser);
         localStorage.setItem(
           'ajrasakha_user',
-          JSON.stringify({ ...parsed, firstName, lastName, state }),
+          JSON.stringify({ ...parsed, firstName, lastName, state, avatar: user?.avatar }),
         );
       }
     } catch {
@@ -184,10 +184,25 @@ export function Profile() {
         {/* Profile Card */}
         <Card className="shadow-sm border-border/50">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <UserIcon className="h-5 w-5" />
-              Personal Information
-            </CardTitle>
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Avatar"
+                    className="h-16 w-16 rounded-full object-cover border-2 border-border"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center border-2 border-border">
+                    <UserIcon className="h-8 w-8 text-primary" />
+                  </div>
+                )}
+              </div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <UserIcon className="h-5 w-5" />
+                Personal Information
+              </CardTitle>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Email (read-only) */}

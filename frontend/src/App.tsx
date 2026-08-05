@@ -28,7 +28,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut, BookOpen } from "lucide-react";
-import { getToken, clearAuth, setToken, setUser } from "./services/api";
+import { getToken, clearAuth, setToken, setUser, authService } from "./services/api";
+
+const USER_STORAGE_KEY = "ajrasakha_user";
 
 
 // Common Header Component
@@ -36,13 +38,13 @@ interface HeaderProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   showUserMenu?: boolean;
-  onShowUserMenu?: boolean;
   onToggleUserMenu?: () => void;
   onNavigate?: (path: string) => void;
   onSignOut?: () => void;
   showLogoutDialog?: boolean;
   onShowLogoutDialog?: (show: boolean) => void;
   showDocs?: boolean;
+  avatar?: string;
 }
 
 function Header({
@@ -53,10 +55,13 @@ function Header({
   onNavigate,
   onSignOut,
   showDocs = true,
+  avatar,
 }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const isDocs = location.pathname === "/documentation";
+  const storedUser = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
+  const displayName = storedUser?.firstName || storedUser?.email?.split("@")[0] || "User";
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
@@ -110,21 +115,18 @@ function Header({
                 onClick={onToggleUserMenu}
                 className="gap-2 pl-2.5 pr-3"
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <UserIcon className="h-3.5 w-3.5" />
-                </span>
-                <span className="max-w-[100px] truncate">
-                  {(() => {
-                    const stored = localStorage.getItem(USER_STORAGE_KEY);
-                    if (stored) {
-                      const user = JSON.parse(stored);
-                      return (
-                        user?.firstName || user?.email?.split("@")[0] || "User"
-                      );
-                    }
-                    return "User";
-                  })()}
-                </span>
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt="Avatar"
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <UserIcon className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                <span className="max-w-[100px] truncate">{displayName}</span>
                 <ChevronDown
                   className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
                     showUserMenu ? "rotate-180" : ""
@@ -193,13 +195,11 @@ function Header({
   );
 }
 
-const USER_STORAGE_KEY = "ajrasakha_user";
-
 // Protected route wrapper - redirects to signin if not authenticated
 function ProtectedRoute() {
   const token = getToken();
   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-  
+
   // Redirect to signin if not authenticated (no token AND no stored user)
   if (!token && !storedUser) {
     return <Navigate to="/signin" replace />;
@@ -217,6 +217,15 @@ function ProtectedLayout() {
   });
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    authService.getProfile().then((profile) => {
+      setAvatar(profile.avatar);
+    }).catch(() => {
+      // Failed to fetch avatar — leave as undefined
+    });
+  }, []);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -250,6 +259,7 @@ function ProtectedLayout() {
           onToggleUserMenu={() => setShowUserMenu(!showUserMenu)}
           onNavigate={(path) => navigate(path)}
           onSignOut={() => setShowLogoutDialog(true)}
+          avatar={avatar}
         />
         <main className="flex-1 w-full">
           <Outlet />
@@ -297,7 +307,7 @@ function GoogleAuthSuccess() {
     }
 
     if (token && userId && email) {
-      // Store token and user data
+      // Store token and basic user data
       setToken(token);
       const user = {
         id: userId,
@@ -308,8 +318,26 @@ function GoogleAuthSuccess() {
       };
       setUser(user);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-      // Redirect to questions page
-      window.location.href = '/questions';
+
+      // Fetch full profile (includes avatar) and update stored user
+      const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      fetch(`${backendUrl}/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((profile) => {
+          if (profile?.avatar) {
+            const updatedUser = { ...user, avatar: profile.avatar };
+            setUser(updatedUser);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+          }
+        })
+        .catch(() => {
+          // Avatar fetch failed — proceed without it
+        })
+        .finally(() => {
+          window.location.href = '/questions';
+        });
     } else {
       window.location.href = '/signin?error=invalid_google_response';
     }
@@ -373,7 +401,7 @@ function SignInWrapper() {
   const navigate = useNavigate();
   const token = getToken();
   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-  
+
   // Redirect to questions if already authenticated (either token or storedUser)
   if (token || storedUser) {
     return <Navigate to="/questions" replace />;
@@ -399,7 +427,7 @@ function SignUpWrapper() {
   const navigate = useNavigate();
   const token = getToken();
   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-  
+
   // Redirect to questions if already authenticated
   if (token || storedUser) {
     return <Navigate to="/questions" replace />;
