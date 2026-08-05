@@ -56,7 +56,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE }}:production
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE }}:production-${{ steps.generate-tags.outputs.short_sha }}
           build-args: |
-            VITE_API_URL=https://ajrasakha-dataset-production-239934307367.asia-south1.run.app/api
+            VITE_API_URL=https://explorer.annam.ai/api
 
   deploy_production:
     name: Deploy to Cloud Run (Production)

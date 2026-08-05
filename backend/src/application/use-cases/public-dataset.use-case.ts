@@ -6,9 +6,10 @@ import type {
 } from '../../domain/repositories/question.repository.interface';
 import { QUESTION_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import type { AnswerRepository } from '../../domain/repositories/answer.repository.interface';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { ANSWER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { QuestionEntity, QuestionEntityDocument, QuestionStatus } from '../../infrastructure/database/schemas/question.schema';
+import type { FilterOptionsQueryDto } from '../dtos/filter-options.dto';
 
 export interface PublicQuestionFilters {
   state?: string | string[];
@@ -132,5 +133,83 @@ export class PublicDatasetUseCase {
     return {
       states: states.filter(Boolean).sort() as string[],
     };
+  }
+
+  async getFilterOptions(
+    dto: FilterOptionsQueryDto,
+  ): Promise<{ type: string; values: string[] }> {
+    const baseQuery: Record<string, unknown> = { status: 'closed' as QuestionStatus };
+
+    const applyCaseInsensitive = (
+      field: string,
+      values: string[],
+    ): Record<string, unknown> => {
+      const trimmed = values.map((v) => v.trim()).filter(Boolean);
+      if (trimmed.length === 0) return {};
+      const escaped = trimmed.map((v) =>
+        v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      );
+      if (escaped.length === 1) {
+        return { [field]: { $regex: `^${escaped[0]}$`, $options: 'i' } };
+      }
+      // Single combined regex with alternation — avoids $or full-scan
+      const alternation = escaped.join('|');
+      return { [field]: { $regex: `^(${alternation})$`, $options: 'i' } };
+    };
+
+    if (dto.state && dto.state.length > 0) {
+      Object.assign(baseQuery, applyCaseInsensitive('details.state', dto.state));
+    }
+    if (dto.district && dto.district.length > 0) {
+      Object.assign(baseQuery, applyCaseInsensitive('details.district', dto.district));
+    }
+    if (dto.crop && dto.crop.length > 0) {
+      Object.assign(baseQuery, applyCaseInsensitive('details.crop', dto.crop));
+    }
+
+    switch (dto.type) {
+      case 'district': {
+        const districts = await this.questionModel
+          .distinct('details.district', baseQuery)
+          .exec();
+        return {
+          type: 'district',
+          values: districts.filter(Boolean).sort() as string[],
+        };
+      }
+
+      case 'crop': {
+        const crops = await this.questionModel
+          .distinct('details.crop', baseQuery)
+          .exec();
+        return {
+          type: 'crop',
+          values: crops.filter(Boolean).sort() as string[],
+        };
+      }
+
+      case 'domain': {
+        // domains are stored as arrays inside documents, so we need aggregation
+        // to $unwind and then collect distinct values
+        const pipeline: PipelineStage[] = [
+          { $match: baseQuery },
+          { $unwind: { path: '$details.domain', preserveNullAndEmptyArrays: false } },
+          { $group: { _id: '$details.domain' } },
+          { $sort: { _id: 1 } as Record<string, 1> },
+        ];
+
+        const results = await this.questionModel
+          .aggregate(pipeline)
+          .exec();
+
+        return {
+          type: 'domain',
+          values: results.map((r) => r._id as string),
+        };
+      }
+
+      default:
+        throw new Error(`Invalid type: ${dto.type}`);
+    }
   }
 }

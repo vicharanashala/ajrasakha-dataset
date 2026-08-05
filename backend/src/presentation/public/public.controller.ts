@@ -7,10 +7,12 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
+  BadRequestException,
 } from '@nestjs/common';
 import type { ApiKeyRepository } from '../../domain/repositories/api-key.repository.interface';
 import { API_KEY_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { PublicDatasetUseCase } from '../../application/use-cases/public-dataset.use-case';
+import { FilterOptionsQueryDto } from '../../application/dtos/filter-options.dto';
 
 @Controller('public')
 export class PublicController {
@@ -73,5 +75,24 @@ export class PublicController {
   async getAvailableFilters(@Headers('authorization') authHeader: string) {
     await this.validateApiKey(authHeader);
     return this.publicDatasetUseCase.getAvailableFilters();
+  }
+
+  @Get('filter-options')
+  @HttpCode(HttpStatus.OK)
+  async getFilterOptions(
+    @Headers('authorization') authHeader: string,
+    @Query() query: FilterOptionsQueryDto,
+  ) {
+    await this.validateApiKey(authHeader);
+
+    const { type } = query;
+
+    if (!type) {
+      throw new BadRequestException(
+        'type query parameter is required. Must be one of: district, crop, domain',
+      );
+    }
+
+    return this.publicDatasetUseCase.getFilterOptions(query);
   }
 }

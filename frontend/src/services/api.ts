@@ -322,6 +322,20 @@ export interface AvailableFilters {
   states: string[];
 }
 
+export type FilterOptionType = 'district' | 'crop' | 'domain';
+
+export interface FilterOptionsResponse {
+  type: FilterOptionType;
+  values: string[];
+}
+
+export interface FilterOptionsParams {
+  type: FilterOptionType;
+  state?: string | string[];
+  district?: string | string[];
+  crop?: string | string[];
+}
+
 export const publicDatasetService = {
   getQuestions: async (
     apiKey: string,
@@ -360,6 +374,30 @@ export const publicDatasetService = {
 
   getAvailableFilters: async (): Promise<AvailableFilters> => {
     const response = await api.get('/available-filters');
+    return response.data;
+  },
+
+  getFilterOptions: async (
+    apiKey: string,
+    params: FilterOptionsParams,
+  ): Promise<FilterOptionsResponse> => {
+    const searchParams = new URLSearchParams();
+    searchParams.set('type', params.type);
+
+    const addParam = (key: string, value: string | string[]) => {
+      const values = typeof value === 'string'
+        ? value.split(',').map((v) => v.trim()).filter(Boolean)
+        : value;
+      values.forEach((v) => searchParams.append(key, v));
+    };
+
+    if (params.state) addParam('state', params.state);
+    if (params.district) addParam('district', params.district);
+    if (params.crop) addParam('crop', params.crop);
+
+    const response = await api.get(`/public/filter-options?${searchParams.toString()}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
     return response.data;
   },
 };

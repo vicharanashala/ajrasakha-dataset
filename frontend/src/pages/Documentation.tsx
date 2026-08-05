@@ -757,7 +757,7 @@ export function Documentation() {
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium flex items-center gap-2">
                       <Hash className="h-4 w-4" />
-                      Available Filter Values
+                      Available State Filter Values
                     </p>
                     {activeKey && (
                       <Button
@@ -810,6 +810,180 @@ export function Documentation() {
                       />
                     )
                   )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Filter Options Endpoint */}
+            <Card className="shadow-sm border-border/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Terminal className="h-5 w-5" />
+                  Filter Options Endpoint
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Discover available filter values in a cascading hierarchy.
+                  Required query params depend on the requested{' '}
+                  <code className="px-1 py-0.5 bg-muted rounded text-xs">type</code>:
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc list-inside">
+                  <li>
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">type=district</code>{' '}
+                    — returns all districts (optionally filtered by{' '}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">state</code>)
+                  </li>
+                  <li>
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">type=crop</code>{' '}
+                    — returns all crops (optionally filtered by{' '}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">state</code>{' '}
+                    and{' '}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">district</code>)
+                  </li>
+                  <li>
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">type=domain</code>{' '}
+                    — returns all domains (optionally filtered by{' '}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">state</code>,{' '}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">district</code>,{' '}
+                    <code className="px-1 py-0.5 bg-muted rounded text-xs">crop</code>)
+                  </li>
+                </ul>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Request URL</p>
+                  <div className="flex items-center gap-2 bg-muted rounded-md px-4 py-3 font-mono text-sm break-all">
+                    <span className="text-primary font-semibold">GET</span>
+                    <span className="text-foreground">
+                      {`${apiUrl.replace('/questions', '/filter-options')}`}
+                    </span>
+                    <CopyButton
+                      text={`${apiUrl.replace('/questions', '/filter-options')}`}
+                      className="shrink-0"
+                    />
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-md border border-border">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/50">
+                        <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">
+                          Parameter
+                        </th>
+                        <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">
+                          Type
+                        </th>
+                        <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">
+                          Required
+                        </th>
+                        <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">
+                          Description
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-muted-foreground">
+                      {[
+                        {
+                          param: 'type',
+                          type: 'string',
+                          required: 'Yes',
+                          desc: "Cascading type to fetch values for. Must be one of: district, crop, domain",
+                        },
+                        {
+                          param: 'state',
+                          type: 'string[]',
+                          required: 'No',
+                          desc: 'State(s) to filter results by. Supports comma-separated or repeated params. Case-insensitive.',
+                        },
+                        {
+                          param: 'district',
+                          type: 'string[]',
+                          required: 'No',
+                          desc: 'District(s) to filter results by. Case-insensitive.',
+                        },
+                        {
+                          param: 'crop',
+                          type: 'string[]',
+                          required: 'No',
+                          desc: 'Crop name(s) to filter results by. Case-insensitive.',
+                        },
+                      ].map((row, i, arr) => (
+                        <tr
+                          key={row.param}
+                          className={i < arr.length - 1 ? 'border-b border-border' : ''}
+                        >
+                          <td className="py-2.5 px-4 font-mono text-xs text-foreground whitespace-nowrap">
+                            {row.param}
+                          </td>
+                          <td className="py-2.5 px-4 whitespace-nowrap">
+                            {row.type}
+                          </td>
+                          <td className="py-2.5 px-4 whitespace-nowrap">
+                            {row.required}
+                          </td>
+                          <td className="py-2.5 px-4">{row.desc}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                  {[
+                    {
+                      label: 'Get all districts',
+                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district"`,
+                    },
+                    {
+                      label: 'Get districts for a state',
+                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district&state=West%20Bengal"`,
+                    },
+                    {
+                      label: 'Get districts for multiple states',
+                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district&state=West%20Bengal&state=Maharashtra"`,
+                    },
+                    {
+                      label: 'Get all crops',
+                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=crop"`,
+                    },
+                    {
+                      label: 'Get all domains',
+                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=domain"`,
+                    },
+                  ].map((ex) => (
+                    <div key={ex.label} className="space-y-1">
+                      <p className="text-xs text-muted-foreground">{ex.label}</p>
+                      <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-all">
+                        <code className="text-foreground whitespace-pre-wrap flex-1">
+                          {ex.code}
+                        </code>
+                        <CopyButton text={ex.code} className="shrink-0 mt-0.5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Response Shape</p>
+                  <pre className="bg-muted rounded-md px-4 py-3 font-mono text-xs overflow-x-auto text-foreground">{`{
+  "type": "district",
+  "values": ["Kolkata", "Howrah", "Hooghly"]
+}`}</pre>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Error Responses</p>
+                  <div className="space-y-2 font-mono text-xs">
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                      <span className="text-destructive font-semibold">400</span>{' '}
+                      <span className="text-muted-foreground">— type missing:</span>
+                      <pre className="mt-1 text-foreground">{`{
+  "statusCode": 400,
+  "message": "type query parameter is required. Must be one of: district, crop, domain"
+}`}</pre>
+                    </div>
+
+                  </div>
                 </div>
               </CardContent>
             </Card>
