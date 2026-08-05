@@ -4,34 +4,32 @@ import {
   QuestionSource,
 } from '../../infrastructure/database/schemas/question.schema';
 
-export interface QuestionDetails {
-  state?: string;
-  district?: string;
-  crop?: string;
-  season?: string;
-  domain?: string[];
-  normalised_crop?: string;
-  tools_used?: string[];
+export interface QuestionDetailResponse {
+  id: string;
+  question: string;
+  details?: {
+    state?: string;
+    district?: string;
+    crop?: string;
+    season?: string;
+    domain?: string[];
+  };
 }
 
 export interface Question {
   id: string;
-  userId?: string;
   question: string;
-  contextId?: string;
+  details?: {
+    state?: string;
+    district?: string;
+    crop?: string;
+    season?: string;
+    domain?: string[];
+  };
   status: QuestionStatus;
-  tag?: string;
-  totalAnswersCount: number;
   priority: IQuestionPriority;
-  details?: QuestionDetails;
-  isAutoAllocate: boolean;
   source: QuestionSource;
   embedding: number[];
-  aiInitialAnswer?: string;
-  aiApprovedAnswer?: string;
-  isClosed: boolean;
-  closedAt?: Date;
-  passedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +39,7 @@ export interface QuestionFilters {
   priority?: IQuestionPriority;
   source?: QuestionSource;
   state?: string;
+  district?: string;
   crop?: string;
   domain?: string;
   search?: string;
@@ -62,7 +61,7 @@ export interface QuestionRepository {
     searchEmbedding?: number[],
     excludeQuestionIds?: string[],
   ): Promise<PaginatedQuestions>;
-  findById(id: string): Promise<Question | null>;
+  findById(id: string): Promise<QuestionDetailResponse | null>;
   searchByVector(
     embedding: number[],
     limit: number,

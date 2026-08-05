@@ -6,7 +6,7 @@ import type {
   QuestionFilters,
   PaginatedQuestions,
 } from '../../domain/repositories/question.repository.interface';
-import type { Question } from '../../domain/repositories/question.repository.interface';
+import type { Question, QuestionDetailResponse } from '../../domain/repositories/question.repository.interface';
 import {
   QuestionEntity,
   QuestionEntityDocument,
@@ -43,6 +43,9 @@ export class MongoQuestionRepository implements QuestionRepository {
     if (filters.crop) {
       query['details.crop'] = filters.crop;
     }
+    if (filters.district) {
+      query['details.district'] = filters.district;
+    }
     if (filters.domain) {
       query['details.domain'] = { $regex: filters.domain, $options: 'i' };
     }
@@ -64,9 +67,14 @@ export class MongoQuestionRepository implements QuestionRepository {
 
     const skip = (page - 1) * limit;
 
+    const selectFields = searchEmbedding && searchEmbedding.length > 0
+      ? 'question details embedding'
+      : 'question details';
+
     const [docs, total] = await Promise.all([
       this.questionModel
         .find(query)
+        .select(selectFields)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -75,7 +83,18 @@ export class MongoQuestionRepository implements QuestionRepository {
       this.questionModel.countDocuments(query).exec(),
     ]);
 
-    const questions = docs.map((doc) => this.toEntity(doc));
+    const isVectorSearch = searchEmbedding && searchEmbedding.length > 0;
+    const questions: Question[] = isVectorSearch
+      ? docs.map((doc) => this.toEntity(doc))
+      : docs.map((doc) => {
+          const plain = doc as QuestionEntity & { _id: Types.ObjectId };
+          const { state, district, crop, season, domain } = plain.details ?? {};
+          return {
+            id: plain._id.toString(),
+            question: plain.question,
+            details: { state, district, crop, season, domain },
+          } as Question;
+        });
 
     // If vector search is requested, score and reorder results
     if (searchEmbedding && searchEmbedding.length > 0) {
@@ -104,10 +123,25 @@ export class MongoQuestionRepository implements QuestionRepository {
     };
   }
 
-  async findById(id: string): Promise<Question | null> {
+  async findById(id: string): Promise<QuestionDetailResponse | null> {
     if (!Types.ObjectId.isValid(id)) return null;
-    const doc = await this.questionModel.findById(id).exec();
-    return doc ? this.toEntity(doc) : null;
+    const doc = await this.questionModel
+      .findById(id)
+      .select('_id question details')
+      .lean()
+      .exec();
+    if (!doc) return null;
+    return {
+      id: doc._id.toString(),
+      question: doc.question,
+      details: {
+        state: doc.details?.state,
+        district: doc.details?.district,
+        crop: doc.details?.crop,
+        season: doc.details?.season,
+        domain: doc.details?.domain,
+      },
+    };
   }
 
   async searchByVector(
@@ -153,31 +187,23 @@ export class MongoQuestionRepository implements QuestionRepository {
     return denominator === 0 ? 0 : dotProduct / denominator;
   }
 
-  private toEntity(doc: QuestionEntityDocument): Question {
-    const plain = doc.toObject({ virtuals: true }) as QuestionEntity & {
-      _id: Types.ObjectId;
-      id?: string;
-    };
+  private toEntity(
+    doc: QuestionEntityDocument | (QuestionEntity & { _id: Types.ObjectId }),
+  ): Question {
+    const plain =
+      'toObject' in doc
+        ? (doc.toObject({ virtuals: true }) as QuestionEntity & { _id: Types.ObjectId; id?: string })
+        : (doc as QuestionEntity & { _id: Types.ObjectId; id?: string });
     return {
       id: plain.id ?? plain._id.toString(),
-      userId: plain.userId?.toString(),
       question: plain.question,
-      contextId: plain.contextId?.toString(),
-      status: plain.status,
-      tag: plain.tag,
-      totalAnswersCount: plain.totalAnswersCount,
-      priority: plain.priority,
       details: plain.details,
-      isAutoAllocate: plain.isAutoAllocate,
-      source: plain.source,
+      status: plain.status ?? 'open',
+      priority: plain.priority ?? 'medium',
+      source: plain.source ?? 'AJRASAKHA',
       embedding: plain.embedding || [],
-      aiInitialAnswer: plain.aiInitialAnswer,
-      aiApprovedAnswer: plain.aiApprovedAnswer,
-      isClosed: plain.isClosed,
-      closedAt: plain.closedAt,
-      passedAt: plain.passedAt,
-      createdAt: plain.createdAt,
-      updatedAt: plain.updatedAt,
+      createdAt: plain.createdAt ?? new Date(),
+      updatedAt: plain.updatedAt ?? new Date(),
     };
   }
 }

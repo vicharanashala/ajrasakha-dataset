@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IAnswer } from '../../domain/repositories/answer.repository.interface';
+import { AnswerDetailResponse } from '../../domain/repositories/answer.repository.interface';
 import { ANSWER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 
 @Injectable()
@@ -9,17 +9,15 @@ export class AnswerUseCase {
     private readonly answerRepository: AnswerRepository,
   ) {}
 
-  async getAnswerByQuestionId(questionId: string): Promise<IAnswer | null> {
+  async getAnswerByQuestionId(
+    questionId: string,
+  ): Promise<AnswerDetailResponse | null> {
     return this.answerRepository.findByQuestionIdAndFinal(questionId);
-  }
-
-  async getQuestionWithAnswer(questionId: string) {
-    const answer =
-      await this.answerRepository.findByQuestionIdAndFinal(questionId);
-    return { answer };
   }
 }
 
 type AnswerRepository = {
-  findByQuestionIdAndFinal(questionId: string): Promise<IAnswer | null>;
+  findByQuestionIdAndFinal(
+    questionId: string,
+  ): Promise<AnswerDetailResponse | null>;
 };

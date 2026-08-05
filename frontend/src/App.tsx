@@ -3,7 +3,9 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Link,
   useNavigate,
+  useLocation,
   Navigate,
   useSearchParams,
   Outlet,
@@ -15,6 +17,7 @@ import { Questions } from "./pages/Questions";
 import { QuestionDetail } from "./pages/QuestionDetail";
 import { Profile } from "./pages/Profile";
 import { MyFeedbacks } from "./pages/MyFeedbacks";
+import { Documentation } from "./pages/Documentation";
 import type { User } from "./types";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +27,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut } from "lucide-react";
+import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut, BookOpen } from "lucide-react";
 import { getToken, clearAuth, setToken, setUser } from "./services/api";
 
 
@@ -50,13 +53,17 @@ function Header({
   onSignOut,
 }: HeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDocs = location.pathname === "/documentation";
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
       <div className="relative flex items-center justify-between px-6 py-2.5">
         {/* Logo - left corner */}
         <div className="flex items-center gap-3 h-12">
-          <img src="/annam-logo.png" alt="Annam Logo" className="h-18 w-auto" />
+          <Link to="/questions">
+            <img src="/annam-logo.png" alt="Annam Logo" className="h-18 w-auto" />
+          </Link>
         </div>
 
         {/* Title - absolutely centered */}
@@ -66,6 +73,19 @@ function Header({
 
         {/* Theme + Profile - right corner */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/documentation")}
+            className={`p-2 rounded-md border transition-colors ${
+              isDocs
+                ? "border-primary/50 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+            aria-label="API Documentation"
+            title="API Documentation"
+          >
+            <BookOpen className="h-4 w-4" />
+          </button>
+
           <button
             onClick={onToggleTheme}
             className="p-2 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -125,6 +145,16 @@ function Header({
                       >
                         <UserIcon className="h-4 w-4 text-muted-foreground" />
                         Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate("/documentation");
+                          onToggleUserMenu();
+                        }}
+                        className="w-full px-3.5 py-2 text-left text-sm text-foreground hover:bg-muted flex items-center gap-2.5 transition-colors"
+                      >
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        API Documentation
                       </button>
                       <button
                         onClick={() => {
@@ -427,6 +457,7 @@ function App() {
             <Route path="/questions/:id" element={<QuestionDetail />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-feedbacks" element={<MyFeedbacks />} />
+            <Route path="/documentation" element={<Documentation />} />
           </Route>
         </Route>
       </Routes>

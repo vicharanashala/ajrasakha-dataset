@@ -5,6 +5,9 @@ import { AuthModule } from './presentation/auth/auth.module';
 import { QuestionModule } from './presentation/question/question.module';
 import { AnswerModule } from './presentation/answer/answer.module';
 import { FeedbackModule } from './presentation/feedback/feedback.module';
+import { ApiKeyModule } from './presentation/api-key/api-key.module';
+import { PublicModule } from './presentation/public/public.module';
+import { AvailableFiltersModule } from './presentation/available-filters/available-filters.module';
 
 @Module({
   imports: [
@@ -14,6 +17,9 @@ import { FeedbackModule } from './presentation/feedback/feedback.module';
     QuestionModule,
     AnswerModule,
     FeedbackModule,
+    ApiKeyModule,
+    PublicModule,
+    AvailableFiltersModule,
   ],
   controllers: [],
   providers: [],

@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Answer, AnswerDocument } from '../database/schemas/answer.schema';
 import {
   AnswerRepository,
+  AnswerDetailResponse,
   IAnswer,
 } from '../../domain/repositories/answer.repository.interface';
 
@@ -21,7 +22,9 @@ export class MongoAnswerRepository implements AnswerRepository {
     return answer ? this.toIAnswer(answer) : null;
   }
 
-  async findByQuestionIdAndFinal(questionId: string): Promise<IAnswer | null> {
+  async findByQuestionIdAndFinal(
+    questionId: string,
+  ): Promise<AnswerDetailResponse | null> {
     const result = await this.answerModel.aggregate([
       {
         $match: {
@@ -32,8 +35,20 @@ export class MongoAnswerRepository implements AnswerRepository {
       {
         $lookup: {
           from: 'users',
-          localField: 'authorId',
-          foreignField: '_id',
+          let: { answerAuthorId: '$authorId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [
+                    { $toObjectId: '$$answerAuthorId' },
+                    '$_id',
+                  ],
+                },
+              },
+            },
+            { $project: { firstName: 1, lastName: 1 } },
+          ],
           as: 'author',
         },
       },
@@ -60,7 +75,10 @@ export class MongoAnswerRepository implements AnswerRepository {
       },
       {
         $project: {
-          author: 0,
+          _id: 1,
+          answer: 1,
+          sources: 1,
+          authorName: 1,
         },
       },
     ]);
@@ -72,22 +90,9 @@ export class MongoAnswerRepository implements AnswerRepository {
     const doc = result[0];
     return {
       id: doc._id.toString(),
-      questionId: doc.questionId.toString(),
-      authorId: doc.authorId?.toString(),
-      authorName: doc.authorName,
-      answerIteration: doc.answerIteration,
-      approvalCount: doc.approvalCount,
-      isFinalAnswer: doc.isFinalAnswer,
-      remarks: doc.remarks,
-      approvedBy: doc.approvedBy?.toString(),
-      status: doc.status,
       answer: doc.answer,
-      reRouted: doc.reRouted,
-      modifications: doc.modifications,
-      sources: doc.sources,
-      embedding: doc.embedding,
-      createdAt: doc.createdAt || new Date(),
-      updatedAt: doc.updatedAt || new Date(),
+      sources: doc.sources ?? [],
+      authorName: doc.authorName,
     };
   }
 

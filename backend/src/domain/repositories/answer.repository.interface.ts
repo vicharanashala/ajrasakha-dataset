@@ -35,7 +35,14 @@ export interface IAnswer {
   updatedAt: Date;
 }
 
+export interface AnswerDetailResponse {
+  id: string;
+  answer: string;
+  sources: SourceItem[];
+  authorName?: string;
+}
+
 export interface AnswerRepository {
   findByQuestionId(questionId: string): Promise<IAnswer | null>;
-  findByQuestionIdAndFinal(questionId: string): Promise<IAnswer | null>;
+  findByQuestionIdAndFinal(questionId: string): Promise<AnswerDetailResponse | null>;
 }

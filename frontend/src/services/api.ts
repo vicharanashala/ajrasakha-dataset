@@ -249,3 +249,114 @@ export const feedbackService = {
     return response.data;
   },
 };
+
+export interface ApiKeyInfo {
+  id: string;
+  key: string; // full key, only returned on creation
+  name?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ApiKeyListItem {
+  id: string;
+  keyPreview: string;
+  name?: string;
+  isActive: boolean;
+  lastUsedAt?: string;
+  createdAt: string;
+}
+
+export const apiKeyService = {
+  generate: async (name?: string): Promise<ApiKeyInfo> => {
+    const response = await api.post('/api-keys', { name });
+    return response.data;
+  },
+
+  list: async (): Promise<ApiKeyListItem[]> => {
+    const response = await api.get('/api-keys');
+    return response.data;
+  },
+
+  revoke: async (id: string): Promise<void> => {
+    await api.delete(`/api-keys/${id}`);
+  },
+};
+
+export interface PublicQuestionFilters {
+  state?: string;
+  crop?: string;
+  district?: string;
+  domain?: string;
+}
+
+export interface PublicQuestion {
+  question: string;
+  details: {
+    state?: string;
+    district?: string;
+    crop?: string;
+    season?: string;
+    domain?: string[];
+  };
+  answer: {
+    answer: string;
+    sources: Array<{
+      source: string;
+      sourceType?: string;
+      sourceName?: string;
+      page?: string | number;
+    }>;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaginatedPublicQuestions {
+  data: PublicQuestion[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AvailableFilters {
+  states: string[];
+  districts: string[];
+  crops: string[];
+  domains: string[];
+}
+
+export const publicDatasetService = {
+  getQuestions: async (
+    apiKey: string,
+    params: PublicQuestionFilters = {},
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<PaginatedPublicQuestions> => {
+    const searchParams = new URLSearchParams();
+    if (params.state) searchParams.set('state', params.state);
+    if (params.crop) searchParams.set('crop', params.crop);
+    if (params.district) searchParams.set('district', params.district);
+    if (params.domain) searchParams.set('domain', params.domain);
+    searchParams.set('page', String(page));
+    searchParams.set('limit', String(limit));
+
+    const response = await api.get(`/public/questions?${searchParams.toString()}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    return response.data;
+  },
+
+  getFilters: async (apiKey: string): Promise<AvailableFilters> => {
+    const response = await api.get('/public/filters', {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    return response.data;
+  },
+
+  getAvailableFilters: async (): Promise<AvailableFilters> => {
+    const response = await api.get('/available-filters');
+    return response.data;
+  },
+};

@@ -21,6 +21,6 @@ import {
       useClass: MongoAnswerRepository,
     },
   ],
-  exports: [AnswerUseCase],
+  exports: [AnswerUseCase, ANSWER_REPOSITORY],
 })
 export class AnswerModule {}

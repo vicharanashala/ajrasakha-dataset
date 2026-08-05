@@ -28,7 +28,7 @@ const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
         onClick={() => onOpenChange?.(false)}
       />
       {/* Content */}
-      <div className="relative z-50 bg-card border border-border rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 animate-in zoom-in-95 duration-200">
+      <div className="relative z-50 bg-card border border-border rounded-lg shadow-lg p-6 max-w-lg w-full mx-4 animate-in zoom-in-95 duration-200">
         {children}
       </div>
     </div>

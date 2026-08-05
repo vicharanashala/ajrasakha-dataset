@@ -36,6 +36,6 @@ import {
       useClass: MongoFeedbackRepository,
     },
   ],
-  exports: [QuestionUseCase],
+  exports: [QuestionUseCase, QUESTION_REPOSITORY, FEEDBACK_REPOSITORY],
 })
 export class QuestionModule {}
