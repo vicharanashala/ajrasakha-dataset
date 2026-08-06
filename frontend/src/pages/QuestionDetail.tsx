@@ -63,7 +63,7 @@ export function QuestionDetail() {
 
   if (loading) {
     return (
-      <div className="w-full px-6 py-4">
+      <div className="w-full px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center justify-center py-16 gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -76,7 +76,7 @@ export function QuestionDetail() {
 
   if (error) {
     return (
-      <div className="w-full px-6 py-4">
+      <div className="w-full px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <Alert variant="destructive" className="border-destructive/50">
             <AlertCircle className="h-4 w-4" />
@@ -97,7 +97,7 @@ export function QuestionDetail() {
 
   if (!question) {
     return (
-      <div className="w-full px-6 py-4">
+      <div className="w-full px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <Alert variant="destructive" className="border-destructive/50">
             <AlertCircle className="h-4 w-4" />
@@ -117,7 +117,7 @@ export function QuestionDetail() {
   }
 
   return (
-    <div className="w-full px-6 py-4">
+    <div className="w-full px-4 sm:px-6 py-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Back Button */}
         <Button variant="ghost" onClick={() => navigate('/questions')} className="pl-0">
@@ -133,7 +133,7 @@ export function QuestionDetail() {
           <CardContent className="space-y-4">
             <p className="text-lg text-foreground">{question.question}</p>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-border">
               {question.details?.state && (
                 <div>
                   <p className="text-xs text-muted-foreground">State</p>

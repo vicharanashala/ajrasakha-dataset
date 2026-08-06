@@ -32,7 +32,7 @@ export const Pagination = ({
   }
 
   return (
-    <div className="flex items-center justify-end gap-3">
+    <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3">
       {/* Limit Dropdown */}
       {onLimitChange && limit !== undefined && (
         <select
@@ -56,7 +56,7 @@ export const Pagination = ({
         className="gap-1"
       >
         <ChevronLeft className="h-4 w-4" />
-        Prev
+        <span className="hidden sm:inline">Prev</span>
       </Button>
 
       <div className="flex gap-1.5">
@@ -91,7 +91,7 @@ export const Pagination = ({
         onClick={() => onPageChange(currentPage + 1)}
         className="gap-1"
       >
-        Next
+        <span className="hidden sm:inline">Next</span>
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>

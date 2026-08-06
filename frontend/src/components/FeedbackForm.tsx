@@ -134,8 +134,8 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
         )}
 
         {/* Thumbs Up/Down */}
-        <div className="flex items-center gap-4">
-          <p className="text-sm text-muted-foreground">Was this answer helpful?</p>
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <p className="text-sm text-muted-foreground w-full sm:w-auto">Was this answer helpful?</p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleTypeSelect('thumbs_up')}

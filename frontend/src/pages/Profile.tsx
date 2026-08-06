@@ -153,7 +153,7 @@ export function Profile() {
   }
 
   return (
-    <div className="w-full px-6 py-4">
+    <div className="w-full px-4 sm:px-6 py-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -184,7 +184,7 @@ export function Profile() {
         {/* Profile Card */}
         <Card className="shadow-sm border-border/50">
           <CardHeader className="pb-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               <div className="flex-shrink-0">
                 {user?.avatar ? (
                   <img
@@ -198,7 +198,7 @@ export function Profile() {
                   </div>
                 )}
               </div>
-              <CardTitle className="text-lg flex items-center gap-2">
+              <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                 <UserIcon className="h-5 w-5" />
                 Personal Information
               </CardTitle>

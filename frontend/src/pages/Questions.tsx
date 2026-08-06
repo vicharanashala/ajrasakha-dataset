@@ -572,12 +572,12 @@ export function Questions() {
   };
 
   return (
-    <div className="w-full px-6 py-4">
+    <div className="w-full px-4 sm:px-6 py-4">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Inline Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 mt-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-6">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
+          <div className="relative flex-1 min-w-[160px] max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
@@ -602,7 +602,7 @@ export function Questions() {
             <select
               value={filters.state || ''}
               onChange={(e) => handleFilterChange('state', e.target.value)}
-              className="pl-8 pr-8 h-9 w-44 text-sm bg-background border border-border rounded-md appearance-none cursor-pointer hover:border-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="pl-8 pr-8 h-9 w-36 sm:w-44 text-sm bg-background border border-border rounded-md appearance-none cursor-pointer hover:border-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               <option value="">All States</option>
               {STATES.map((state) => (
@@ -627,7 +627,7 @@ export function Questions() {
             <select
               value={filters.crop || ''}
               onChange={(e) => handleFilterChange('crop', e.target.value)}
-              className="pl-8 pr-8 h-9 w-44 text-sm bg-background border border-border rounded-md appearance-none cursor-pointer hover:border-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="pl-8 pr-8 h-9 w-36 sm:w-44 text-sm bg-background border border-border rounded-md appearance-none cursor-pointer hover:border-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               <option value="">All Crops</option>
               {CROPS.map((crop) => (
@@ -687,7 +687,7 @@ export function Questions() {
               <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50 border-border">
-                        <TableHead className="pl-4 py-3 font-medium text-foreground text-sm w-12">
+                        <TableHead className="pl-4 py-3 font-medium text-foreground text-sm w-12 hidden sm:table-cell">
                           #
                         </TableHead>
                         <TableHead className="py-3 font-medium text-foreground text-sm">
@@ -710,7 +710,7 @@ export function Questions() {
                             index % 2 === 0 ? 'bg-background' : 'bg-muted/5'
                           }`}
                         >
-                          <TableCell className="pl-4 py-3 text-sm text-muted-foreground">
+                          <TableCell className="pl-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                             {(pagination ? (pagination.page - 1) * limit : 0) + index + 1}
                           </TableCell>
                           <TableCell className="py-3">

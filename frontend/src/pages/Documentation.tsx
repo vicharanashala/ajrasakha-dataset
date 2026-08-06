@@ -166,7 +166,7 @@ function ApiKeyGeneratedModal({
           Copy and store this key securely now — it will never be displayed again.
         </DialogDescription>
       </DialogHeader>
-      <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-4 py-3 my-4">
+      <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-4 py-3 my-4 overflow-x-auto">
         <code className="flex-1 text-sm font-mono text-foreground break-all">
           {maskApiKey(apiKey.key)}
         </code>
@@ -238,6 +238,9 @@ export function Documentation() {
   const [filtersError, setFiltersError] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [examplesExpanded, setExamplesExpanded] = useState(false);
+  const [filterExamplesExpanded, setFilterExamplesExpanded] = useState(false);
+  const [errorExamplesExpanded, setErrorExamplesExpanded] = useState(false);
+  const [filterErrorExamplesExpanded, setFilterErrorExamplesExpanded] = useState(false);
   const [keyToRevoke, setKeyToRevoke] = useState<{ id: string; name?: string } | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>("api-keys");
 
@@ -354,16 +357,16 @@ export function Documentation() {
   })();
 
   return (
-    <div className="w-full px-6 lg:px-10 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
       <div className="w-full max-w-[1400px] mx-auto">
         {/* Page Header */}
         <div className="flex items-start justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <BookOpen className="h-4 w-4" />
-              <span className="text-sm font-medium">Documentation</span>
+              <span className="text-sm font-medium">API Documentation</span>
             </div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Ajrasakha Dataset API
             </h1>
             <p className="text-sm text-muted-foreground mt-1.5 max-w-2xl">
@@ -399,7 +402,7 @@ export function Documentation() {
               className="shadow-sm border-border/50 scroll-mt-6"
             >
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Key className="h-5 w-5" />
                   API Keys
                 </CardTitle>
@@ -549,7 +552,7 @@ export function Documentation() {
             {/* Endpoint Documentation */}
             <Card className="shadow-sm border-border/50">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
                   <Terminal className="h-5 w-5" />
                   API Endpoint
                 </CardTitle>
@@ -558,9 +561,9 @@ export function Documentation() {
                 {/* Endpoint URL */}
                 <div id="endpoint" className="space-y-2 scroll-mt-6">
                   <p className="text-sm font-medium">Request URL</p>
-                  <div className="flex items-center gap-2 bg-muted rounded-md px-4 py-3 font-mono text-sm break-all">
-                    <span className="text-primary font-semibold">GET</span>
-                    <span className="text-foreground">{apiUrl}</span>
+                  <div className="flex items-start sm:items-center gap-2 bg-muted rounded-md px-4 py-3 font-mono text-sm break-words overflow-x-auto">
+                    <span className="text-primary font-semibold shrink-0">GET</span>
+                    <span className="text-foreground break-all">{apiUrl}</span>
                     <CopyButton text={apiUrl} className="shrink-0" />
                   </div>
                 </div>
@@ -575,8 +578,8 @@ export function Documentation() {
                     </code>{" "}
                     header:
                   </p>
-                  <div className="bg-muted rounded-md px-4 py-3 font-mono text-sm">
-                    <p>
+                  <div className="bg-muted rounded-md px-4 py-3 font-mono text-sm overflow-x-auto">
+                    <p className="break-words">
                       Authorization: Bearer{" "}
                       <span className="text-primary">YOUR_API_KEY</span>
                     </p>
@@ -587,7 +590,7 @@ export function Documentation() {
                 <div id="params" className="space-y-3 scroll-mt-6">
                   <p className="text-sm font-medium">Query Parameters</p>
                   <div className="overflow-x-auto rounded-md border border-border">
-                    <table className="w-full text-sm border-collapse">
+                    <table className="w-full text-sm border-collapse min-w-[480px]">
                       <thead>
                         <tr className="border-b border-border bg-muted/50">
                           <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">
@@ -710,8 +713,8 @@ export function Documentation() {
                           <p className="text-xs text-muted-foreground">
                             {ex.label}
                           </p>
-                          <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-all">
-                            <code className="text-foreground whitespace-pre-wrap flex-1">
+                          <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-words overflow-x-auto">
+                            <code className="text-foreground whitespace-pre-wrap flex-1 break-words">
                               {ex.code}
                             </code>
                             <CopyButton
@@ -749,7 +752,53 @@ export function Documentation() {
   "page": 1,
   "limit": 20,
   "totalPages": 50
+`}</pre>
+                </div>
+
+                {/* Error Responses */}
+                <div id="errors" className="space-y-3 scroll-mt-6">
+                  <button
+                    onClick={() => setErrorExamplesExpanded((v) => !v)}
+                    className="flex items-center gap-2 text-sm font-medium hover:text-foreground transition-colors"
+                  >
+                    {errorExamplesExpanded ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    )}
+                    Error Responses
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      (click to {errorExamplesExpanded ? 'collapse' : 'expand'})
+                    </span>
+                  </button>
+                  {errorExamplesExpanded && (
+                    <div className="space-y-2 font-mono text-xs">
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                        <span className="text-destructive font-semibold">401</span>{' '}
+                        <span className="text-muted-foreground">— missing or invalid API key:</span>
+                        <pre className="mt-1 text-foreground">{`{
+  "statusCode": 401,
+  "message": "Authorization header with Bearer token is required"
 }`}</pre>
+                      </div>
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                        <span className="text-destructive font-semibold">401</span>{' '}
+                        <span className="text-muted-foreground">— revoked or expired API key:</span>
+                        <pre className="mt-1 text-foreground">{`{
+  "statusCode": 401,
+  "message": "API key has been revoked"
+}`}</pre>
+                      </div>
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                        <span className="text-destructive font-semibold">400</span>{' '}
+                        <span className="text-muted-foreground">— invalid pagination params:</span>
+                        <pre className="mt-1 text-foreground">{`{
+  "statusCode": 400,
+  "message": "page must be a positive integer"
+}`}</pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Available Filters */}
@@ -851,9 +900,9 @@ export function Documentation() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Request URL</p>
-                  <div className="flex items-center gap-2 bg-muted rounded-md px-4 py-3 font-mono text-sm break-all">
-                    <span className="text-primary font-semibold">GET</span>
-                    <span className="text-foreground">
+                  <div className="flex items-start sm:items-center gap-2 bg-muted rounded-md px-4 py-3 font-mono text-sm break-words overflow-x-auto">
+                    <span className="text-primary font-semibold shrink-0">GET</span>
+                    <span className="text-foreground break-all">
                       {`${apiUrl.replace('/questions', '/filter-options')}`}
                     </span>
                     <CopyButton
@@ -864,7 +913,7 @@ export function Documentation() {
                 </div>
 
                 <div className="overflow-x-auto rounded-md border border-border">
-                  <table className="w-full text-sm border-collapse">
+                  <table className="w-full text-sm border-collapse min-w-[480px]">
                     <thead>
                       <tr className="border-b border-border bg-muted/50">
                         <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">
@@ -928,39 +977,57 @@ export function Documentation() {
                   </table>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-                  {[
-                    {
-                      label: 'Get all districts',
-                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district"`,
-                    },
-                    {
-                      label: 'Get districts for a state',
-                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district&state=West%20Bengal"`,
-                    },
-                    {
-                      label: 'Get districts for multiple states',
-                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district&state=West%20Bengal&state=Maharashtra"`,
-                    },
-                    {
-                      label: 'Get all crops',
-                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=crop"`,
-                    },
-                    {
-                      label: 'Get all domains',
-                      code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=domain"`,
-                    },
-                  ].map((ex) => (
-                    <div key={ex.label} className="space-y-1">
-                      <p className="text-xs text-muted-foreground">{ex.label}</p>
-                      <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-all">
-                        <code className="text-foreground whitespace-pre-wrap flex-1">
-                          {ex.code}
-                        </code>
-                        <CopyButton text={ex.code} className="shrink-0 mt-0.5" />
-                      </div>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setFilterExamplesExpanded((v) => !v)}
+                    className="flex items-center gap-2 text-sm font-medium hover:text-foreground transition-colors"
+                  >
+                    {filterExamplesExpanded ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    )}
+                    Example Requests
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      (click to {filterExamplesExpanded ? 'collapse' : 'expand'})
+                    </span>
+                  </button>
+                  {filterExamplesExpanded && (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                      {[
+                        {
+                          label: 'Get all districts',
+                          code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district"`,
+                        },
+                        {
+                          label: 'Get districts for a state',
+                          code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district&state=West%20Bengal"`,
+                        },
+                        {
+                          label: 'Get districts for multiple states',
+                          code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=district&state=West%20Bengal&state=Maharashtra"`,
+                        },
+                        {
+                          label: 'Get all crops',
+                          code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=crop"`,
+                        },
+                        {
+                          label: 'Get all domains',
+                          code: `curl -H "Authorization: Bearer ***" "${apiUrl.replace('/questions', '/filter-options')}?type=domain"`,
+                        },
+                      ].map((ex) => (
+                        <div key={ex.label} className="space-y-1">
+                          <p className="text-xs text-muted-foreground">{ex.label}</p>
+                          <div className="flex items-start gap-2 bg-muted rounded-md px-4 py-3 font-mono text-xs break-words overflow-x-auto">
+                            <code className="text-foreground whitespace-pre-wrap flex-1 break-words">
+                              {ex.code}
+                            </code>
+                            <CopyButton text={ex.code} className="shrink-0 mt-0.5" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -971,19 +1038,49 @@ export function Documentation() {
 }`}</pre>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Error Responses</p>
-                  <div className="space-y-2 font-mono text-xs">
-                    <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
-                      <span className="text-destructive font-semibold">400</span>{' '}
-                      <span className="text-muted-foreground">— type missing:</span>
-                      <pre className="mt-1 text-foreground">{`{
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setFilterErrorExamplesExpanded((v) => !v)}
+                    className="flex items-center gap-2 text-sm font-medium hover:text-foreground transition-colors"
+                  >
+                    {filterErrorExamplesExpanded ? (
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    )}
+                    Error Responses
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      (click to {filterErrorExamplesExpanded ? 'collapse' : 'expand'})
+                    </span>
+                  </button>
+                  {filterErrorExamplesExpanded && (
+                    <div className="space-y-2 font-mono text-xs">
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                        <span className="text-destructive font-semibold">401</span>{' '}
+                        <span className="text-muted-foreground">— missing or invalid API key:</span>
+                        <pre className="mt-1 text-foreground">{`{
+  "statusCode": 401,
+  "message": "Authorization header with Bearer token is required"
+}`}</pre>
+                      </div>
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                        <span className="text-destructive font-semibold">401</span>{' '}
+                        <span className="text-muted-foreground">— revoked or expired API key:</span>
+                        <pre className="mt-1 text-foreground">{`{
+  "statusCode": 401,
+  "message": "API key has been revoked"
+}`}</pre>
+                      </div>
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md px-4 py-3">
+                        <span className="text-destructive font-semibold">400</span>{' '}
+                        <span className="text-muted-foreground">— type missing:</span>
+                        <pre className="mt-1 text-foreground">{`{
   "statusCode": 400,
   "message": "type query parameter is required. Must be one of: district, crop, domain"
 }`}</pre>
+                      </div>
                     </div>
-
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

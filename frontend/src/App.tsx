@@ -65,25 +65,25 @@ function Header({
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
-      <div className="relative flex items-center justify-between px-6 py-2.5">
+      <div className="relative flex items-center justify-between px-3 sm:px-6 py-2">
         {/* Logo - left corner */}
-        <div className="flex items-center gap-3 h-12">
+        <div className="flex items-center gap-2 sm:gap-3 h-10 sm:h-12">
           <Link to="/questions">
-            <img src="/annam-logo.png" alt="Annam Logo" className="h-18 w-auto" />
+            <img src="/annam-logo.png" alt="Annam Logo" className="h-9 sm:h-12 w-auto" />
           </Link>
         </div>
 
         {/* Title - absolutely centered */}
-        <h1 className="absolute left-1/2 -translate-x-1/2 text-lg sm:text-xl font-bold tracking-wide uppercase text-foreground leading-tight whitespace-nowrap">
+        <h1 className="absolute left-1/2 -translate-x-1/2 text-xs sm:text-base lg:text-xl font-bold tracking-wide uppercase text-foreground leading-tight whitespace-nowrap hidden sm:block">
           Ajrasakha Dataset
         </h1>
 
-        {/* Theme + Profile - right corner */}
-        <div className="flex items-center gap-2">
+        {/* Right section — wraps on very small screens */}
+        <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2 min-w-0">
           {showDocs && (
             <button
               onClick={() => navigate("/documentation")}
-              className={`p-2 rounded-md border transition-colors ${
+              className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md border transition-colors text-sm ${
                 isDocs
                   ? "border-primary/50 bg-primary/10 text-primary"
                   : "border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -91,7 +91,8 @@ function Header({
               aria-label="API Documentation"
               title="API Documentation"
             >
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">API Documentation</span>
             </button>
           )}
 
@@ -122,11 +123,11 @@ function Header({
                     className="h-6 w-6 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <span className="flex h-5 sm:h-6 w-5 sm:w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <UserIcon className="h-3.5 w-3.5" />
                   </span>
                 )}
-                <span className="max-w-[100px] truncate">{displayName}</span>
+                <span className="max-w-[48px] xs:max-w-[80px] sm:max-w-[100px] truncate">{displayName}</span>
                 <ChevronDown
                   className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
                     showUserMenu ? "rotate-180" : ""

@@ -63,7 +63,7 @@ export function MyFeedbacks() {
     <div className="w-full">
       {/* Header */}
       <div className="bg-card border-b border-border px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -92,7 +92,7 @@ export function MyFeedbacks() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {feedbacks.length === 0 ? (
           <Card className="shadow-sm border-border/50">
             <CardContent className="flex flex-col items-center justify-center py-16">
