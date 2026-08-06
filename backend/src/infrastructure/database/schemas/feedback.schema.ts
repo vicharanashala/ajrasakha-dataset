@@ -1,7 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-export type FeedbackType = 'thumbs_up' | 'thumbs_down';
+export enum FeedbackType {
+  THUMBS_UP = 'thumbs_up',
+  THUMBS_DOWN = 'thumbs_down',
+}
+
+export enum FeedbackStatus {
+  OPEN = 'open',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+}
 
 // Predefined feedback options
 export const POSITIVE_FEEDBACK_OPTIONS = [
@@ -25,16 +34,16 @@ export type NegativeFeedbackOption = (typeof NEGATIVE_FEEDBACK_OPTIONS)[number];
 
 @Schema({ timestamps: true })
 export class Feedback {
-  @Prop({ type: Types.ObjectId, ref: 'Question', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'QuestionEntity', required: true, index: true })
   questionId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'UserEntity', required: true })
   userId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Answer' })
   answerId?: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['thumbs_up', 'thumbs_down'] })
+  @Prop({ required: true, enum: FeedbackType, type: String })
   type: FeedbackType;
 
   @Prop({ type: String, required: true })
@@ -42,6 +51,12 @@ export class Feedback {
 
   @Prop({ type: String, required: true })
   comment: string;
+
+  @Prop({ type: String, enum: FeedbackStatus, default: FeedbackStatus.OPEN, index: true })
+  status!: FeedbackStatus;
+
+  @Prop({ type: String, required: false })
+  reviewNote?: string;
 }
 
 export type FeedbackDocument = Feedback &
@@ -54,3 +69,4 @@ export const FeedbackSchema = SchemaFactory.createForClass(Feedback);
 
 // Index for efficient lookup by questionId
 FeedbackSchema.index({ questionId: 1, userId: 1 }, { unique: true });
+FeedbackSchema.index({ status: 1, questionId: 1 });

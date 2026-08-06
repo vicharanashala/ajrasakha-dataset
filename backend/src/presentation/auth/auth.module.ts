@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
 import { MongoUserRepository } from '../../infrastructure/persistence/mongo-user.repository';
 import { OtpService } from '../../infrastructure/services/otp.service';
-import { EmailService } from '../../infrastructure/services/email.service';
+import { EmailModule } from '../../infrastructure/services/email.module';
 import { JwtService } from '../../infrastructure/auth/jwt.service';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 import { GoogleStrategy } from '../../infrastructure/auth/google.strategy';
@@ -20,18 +20,18 @@ import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
   imports: [
     MongooseModule.forFeature([{ name: UserEntity.name, schema: UserSchema }]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    EmailModule,
   ],
   controllers: [AuthController],
   providers: [
     AuthUseCases,
     { provide: USER_REPOSITORY, useClass: MongoUserRepository },
     OtpService,
-    EmailService,
     JwtService,
     JwtAuthGuard,
     GoogleStrategy,
     GoogleAuthGuard,
   ],
-  exports: [JwtService, JwtAuthGuard, GoogleAuthGuard],
+  exports: [JwtService, JwtAuthGuard, GoogleAuthGuard, EmailModule],
 })
 export class AuthModule {}
