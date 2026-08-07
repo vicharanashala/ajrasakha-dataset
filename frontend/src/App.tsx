@@ -482,6 +482,8 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/my-feedbacks" element={<MyFeedbacks />} />
           <Route path="/documentation" element={<Documentation />} />
+          {/* Catch-all: redirect any unspecified route (e.g. /signin) to /questions */}
+          <Route path="*" element={<Navigate to="/questions" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>
