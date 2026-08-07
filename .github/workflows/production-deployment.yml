@@ -91,5 +91,6 @@ jobs:
             EMAIL_PASS=${{ secrets.EMAIL_PASS }}
             FRONTEND_URL=${{ vars.FRONTEND_URL }}
             REVIEW_SYSTEM_AUTH_KEY=${{ secrets.REVIEW_SYSTEM_AUTH_KEY }}
+            REVIEWER_BACKEND_URL=${{ secrets.REVIEWER_BACKEND_URL }}
           env_vars_update_strategy: merge
           flags: --allow-unauthenticated
