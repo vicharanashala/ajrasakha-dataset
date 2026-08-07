@@ -10,16 +10,22 @@ import {
   useSearchParams,
   Outlet,
 } from "react-router-dom";
-import { SignUp } from "./pages/SignUp";
-import { SignIn } from "./pages/SignIn";
-import { VerifyOtp } from "./pages/VerifyOtp";
+// ============================================================================
+// AUTH ROUTES — COMMENTED OUT (manual auth disabled, Google-only below)
+// Uncomment these imports and route definitions to re-enable auth pages.
+// ============================================================================
+// import { SignUp } from "./pages/SignUp";
+// import { SignIn } from "./pages/SignIn";
+// import { VerifyOtp } from "./pages/VerifyOtp";
+// import type { User } from "./types";
+// import { getToken, setToken, setUser } from "./services/api";
 import { Questions } from "./pages/Questions";
 import { QuestionDetail } from "./pages/QuestionDetail";
 import { Profile } from "./pages/Profile";
 import { MyFeedbacks } from "./pages/MyFeedbacks";
 import { Documentation } from "./pages/Documentation";
-import type { User } from "./types";
 import { Button } from "@/components/ui/button";
+import { AuthPromptModal } from "@/components/AuthPromptModal";
 import {
   Dialog,
   DialogHeader,
@@ -28,7 +34,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut, BookOpen } from "lucide-react";
-import { getToken, clearAuth, setToken, setUser, authService } from "./services/api";
+import { setToken, setUser, clearAuth, authService } from "./services/api";
 
 const USER_STORAGE_KEY = "ajrasakha_user";
 
@@ -45,6 +51,8 @@ interface HeaderProps {
   onShowLogoutDialog?: (show: boolean) => void;
   showDocs?: boolean;
   avatar?: string;
+  isAuthenticated?: boolean;
+  onAuthRequired?: () => void;
 }
 
 function Header({
@@ -56,6 +64,8 @@ function Header({
   onSignOut,
   showDocs = true,
   avatar,
+  isAuthenticated,
+  onAuthRequired,
 }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,7 +92,10 @@ function Header({
         <div className="flex flex-wrap items-center justify-end gap-1 sm:gap-2 min-w-0">
           {showDocs && (
             <button
-              onClick={() => navigate("/documentation")}
+              onClick={() => {
+                if (!isAuthenticated) { onAuthRequired?.(); return; }
+                navigate("/documentation");
+              }}
               className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md border transition-colors text-sm ${
                 isDocs
                   ? "border-primary/50 bg-primary/10 text-primary"
@@ -145,6 +158,7 @@ function Header({
                     <div className="py-1.5">
                       <button
                         onClick={() => {
+                          if (!isAuthenticated) { onAuthRequired?.(); return; }
                           navigate("/profile");
                           onToggleUserMenu();
                         }}
@@ -155,6 +169,7 @@ function Header({
                       </button>
                       <button
                         onClick={() => {
+                          if (!isAuthenticated) { onAuthRequired?.(); return; }
                           navigate("/documentation");
                           onToggleUserMenu();
                         }}
@@ -165,6 +180,7 @@ function Header({
                       </button>
                       <button
                         onClick={() => {
+                          if (!isAuthenticated) { onAuthRequired?.(); return; }
                           navigate("/my-feedbacks");
                           onToggleUserMenu();
                         }}
@@ -196,17 +212,18 @@ function Header({
   );
 }
 
-// Protected route wrapper - redirects to signin if not authenticated
-function ProtectedRoute() {
-  const token = getToken();
-  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-  // Redirect to signin if not authenticated (no token AND no stored user)
-  if (!token && !storedUser) {
-    return <Navigate to="/signin" replace />;
-  }
-  return <Outlet />;
-}
+// ============================================================================
+// PROTECTED ROUTE — COMMENTED OUT
+// All routes are now public. Uncomment to re-enable auth guard.
+// ============================================================================
+// function ProtectedRoute() {
+//   const token = getToken();
+//   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+//   if (!token && !storedUser) {
+//     return <Navigate to="/signin" replace />;
+//   }
+//   return <Outlet />;
+// }
 
 
 // Layout wrapper for protected routes (with header and user menu)
@@ -218,6 +235,7 @@ function ProtectedLayout() {
   });
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -247,7 +265,7 @@ function ProtectedLayout() {
   const handleSignOut = () => {
     clearAuth();
     setShowLogoutDialog(false);
-    navigate('/signin');
+    navigate('/');
   };
 
   return (
@@ -261,10 +279,17 @@ function ProtectedLayout() {
           onNavigate={(path) => navigate(path)}
           onSignOut={() => setShowLogoutDialog(true)}
           avatar={avatar}
+          isAuthenticated={!!localStorage.getItem('auth_token')}
+          onAuthRequired={() => setShowAuthModal(true)}
         />
         <main className="flex-1 w-full">
           <Outlet />
         </main>
+        <AuthPromptModal
+          open={showAuthModal}
+          onOpenChange={setShowAuthModal}
+          message="Sign in to access all features including API documentation and your profile."
+        />
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
           <DialogHeader>
             <DialogTitle>Sign Out</DialogTitle>
@@ -355,144 +380,108 @@ function GoogleAuthSuccess() {
   );
 }
 
-// Auth layout with header (no user menu)
-function AuthLayout() {
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    const stored = localStorage.getItem("theme");
-    if (stored) return stored === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
+// ============================================================================
+// AUTH LAYOUT + WRAPPER COMPONENTS — COMMENTED OUT
+// Uncomment to re-enable dedicated signin/signup pages.
+// ============================================================================
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [isDarkMode]);
+// function AuthLayout() {
+//   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+//     const stored = localStorage.getItem("theme");
+//     if (stored) return stored === "dark";
+//     return window.matchMedia("(prefers-color-scheme: dark)").matches;
+//   });
+//   useEffect(() => {
+//     if (isDarkMode) {
+//       document.documentElement.classList.add("dark");
+//       localStorage.setItem("theme", "dark");
+//     } else {
+//       document.documentElement.classList.remove("dark");
+//       localStorage.setItem("theme", "light");
+//     }
+//   }, [isDarkMode]);
+//   const toggleTheme = () => setIsDarkMode((prev) => !prev);
+//   return (
+//     <div className="flex min-h-screen flex-col bg-background">
+//       <Header isDarkMode={isDarkMode} onToggleTheme={toggleTheme} showDocs={false} />
+//       <main className="flex flex-1 items-center justify-center px-4 py-12">
+//         <Routes>
+//           <Route path="/signin" element={<SignInWrapper />} />
+//           <Route path="/signup" element={<SignUpWrapper />} />
+//           <Route path="/verify-otp" element={<VerifyOtpWrapper />} />
+//           <Route path="/auth-success" element={<GoogleAuthSuccess />} />
+//         </Routes>
+//       </main>
+//     </div>
+//   );
+// }
 
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => !prev);
-  };
+// function SignInWrapper() {
+//   const navigate = useNavigate();
+//   const token = getToken();
+//   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+//   if (token || storedUser) return <Navigate to="/questions" replace />;
+//   const handleSignedIn = (user: User, token: string) => {
+//     setToken(token);
+//     setUser(user);
+//     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...user, isVerified: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+//     navigate('/questions');
+//   };
+//   return <SignIn onSwitchToSignUp={() => navigate('/signup')} onSignedIn={handleSignedIn} />;
+// }
 
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        isDarkMode={isDarkMode}
-        onToggleTheme={toggleTheme}
-        showDocs={false}
-      />
-      <main className="flex flex-1 items-center justify-center px-4 py-12">
-        <Routes>
-          <Route path="/signin" element={<SignInWrapper />} />
-          <Route path="/signup" element={<SignUpWrapper />} />
-          <Route path="/verify-otp" element={<VerifyOtpWrapper />} />
-          <Route path="/auth-success" element={<GoogleAuthSuccess />} />
-        </Routes>
-      </main>
-    </div>
-  );
-}
+// function SignUpWrapper() {
+//   const navigate = useNavigate();
+//   const token = getToken();
+//   const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+//   if (token || storedUser) return <Navigate to="/questions" replace />;
+//   const handleSignupSuccess = (email: string) => {
+//     localStorage.setItem('ajrasakha_pending_email', email);
+//     navigate('/verify-otp');
+//   };
+//   return <SignUp onSwitchToSignIn={() => navigate('/signin')} onSignupSuccess={handleSignupSuccess} />;
+// }
 
-
-// Wrapper components for auth pages
-function SignInWrapper() {
-  const navigate = useNavigate();
-  const token = getToken();
-  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-  // Redirect to questions if already authenticated (either token or storedUser)
-  if (token || storedUser) {
-    return <Navigate to="/questions" replace />;
-  }
-
-  const handleSignedIn = (user: User, token: string) => {
-    setToken(token);
-    setUser(user);
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
-      ...user,
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
-    navigate('/questions');
-  };
-
-  return <SignIn onSwitchToSignUp={() => navigate('/signup')} onSignedIn={handleSignedIn} />;
-}
-
-
-function SignUpWrapper() {
-  const navigate = useNavigate();
-  const token = getToken();
-  const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-
-  // Redirect to questions if already authenticated
-  if (token || storedUser) {
-    return <Navigate to="/questions" replace />;
-  }
-
-  const handleSignupSuccess = (email: string) => {
-    localStorage.setItem('ajrasakha_pending_email', email);
-    navigate('/verify-otp');
-  };
-
-  return <SignUp onSwitchToSignIn={() => navigate('/signin')} onSignupSuccess={handleSignupSuccess} />;
-}
-
-function VerifyOtpWrapper() {
-  const pendingEmail = localStorage.getItem('ajrasakha_pending_email') || '';
-
-  const handleVerified = (user: { id: string; email: string }, token?: string) => {
-    localStorage.removeItem('ajrasakha_pending_email');
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({
-      ...user,
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
-    // Store JWT token if provided
-    if (token) {
-      setToken(token);
-    }
-    window.location.href = '/questions';
-  };
-
-
-  if (!pendingEmail) {
-    return <Navigate to="/signup" replace />;
-  }
-
-  return <VerifyOtp email={pendingEmail} onVerified={handleVerified} onBack={() => window.location.href = '/signup'} />;
-}
+// function VerifyOtpWrapper() {
+//   const pendingEmail = localStorage.getItem('ajrasakha_pending_email') || '';
+//   const handleVerified = (user: { id: string; email: string }, token?: string) => {
+//     localStorage.removeItem('ajrasakha_pending_email');
+//     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({ ...user, isVerified: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+//     if (token) setToken(token);
+//     window.location.href = '/questions';
+//   };
+//   if (!pendingEmail) return <Navigate to="/signup" replace />;
+//   return <VerifyOtp email={pendingEmail} onVerified={handleVerified} onBack={() => window.location.href = '/signup'} />;
+// }
 
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Google OAuth callback - must be outside AuthLayout to work */}
+        {/* Google OAuth callback — public */}
         <Route path="/auth-success" element={<GoogleAuthSuccess />} />
 
-        {/* Auth routes without header */}
+        {/*
+          Auth routes commented out — users access via Google sign-in only.
+          Uncomment the AuthLayout and route below to re-enable dedicated auth pages.
+        */}
+        {/*
         <Route element={<AuthLayout />}>
           <Route path="/signin" element={<SignInWrapper />} />
           <Route path="/signup" element={<SignUpWrapper />} />
           <Route path="/verify-otp" element={<VerifyOtpWrapper />} />
         </Route>
+        */}
 
-        {/* Protected routes with header - all require authentication */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<ProtectedLayout />}>
-            <Route path="/" element={<Navigate to="/questions" replace />} />
-            <Route path="/questions" element={<Questions />} />
-            <Route path="/questions/:id" element={<QuestionDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/my-feedbacks" element={<MyFeedbacks />} />
-            <Route path="/documentation" element={<Documentation />} />
-          </Route>
+        {/* All routes public — auth is optional */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/" element={<Navigate to="/questions" replace />} />
+          <Route path="/questions" element={<Questions />} />
+          <Route path="/questions/:id" element={<QuestionDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/my-feedbacks" element={<MyFeedbacks />} />
+          <Route path="/documentation" element={<Documentation />} />
         </Route>
       </Routes>
     </BrowserRouter>

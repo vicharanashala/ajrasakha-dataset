@@ -53,8 +53,9 @@ export const removeUser = (): void => {
 export const clearAuth = (): void => {
   removeToken();
   removeUser();
-  // Also clear the user key used in App.tsx
+  // Also clear the user key used in App.tsx and elsewhere
   localStorage.removeItem('ajrasakha_user');
+  localStorage.removeItem('ajrasakha_token');
 };
 
 // Create axios instance
@@ -90,7 +91,8 @@ api.interceptors.response.use(
     // Don't redirect on 401 during sign-in attempts (wrong credentials)
     if (error.response?.status === 401 && getToken()) {
       clearAuth();
-      window.location.href = '/signin';
+      // /signin is commented out — redirect to home which shows the questions page
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
@@ -169,6 +171,7 @@ export const questionService = {
     filters: QuestionFilters = {},
     page: number = 1,
     limit: number = 20,
+    userId?: string,
   ): Promise<PaginatedQuestions> => {
     const params = new URLSearchParams();
 
@@ -189,6 +192,9 @@ export const questionService = {
     // Add pagination
     params.append('page', page.toString());
     params.append('limit', limit.toString());
+
+    // userId signals authenticated user — backend caps limit at 5
+    if (userId) params.append('userId', userId);
 
     const response = await api.get(`/questions?${params.toString()}`);
     return response.data;

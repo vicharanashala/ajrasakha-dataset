@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { feedbackService } from '../services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AuthPromptModal } from '@/components/AuthPromptModal';
 import { IFeedback } from '../types';
 import {
   ThumbsUp,
@@ -13,20 +14,24 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
+const USER_STORAGE_KEY = "ajrasakha_user";
+
 export function MyFeedbacks() {
   const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState<IFeedback[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('ajrasakha_user');
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     if (!storedUser) {
-      navigate('/signin');
+      setShowAuthModal(true);
+      setLoading(false);
       return;
     }
     const parsedUser = JSON.parse(storedUser);
     fetchUserFeedbacks(parsedUser.id);
-  }, [navigate]);
+  }, []);
 
   const fetchUserFeedbacks = async (userId: string) => {
     try {
@@ -182,6 +187,12 @@ export function MyFeedbacks() {
           </div>
         )}
       </div>
+
+      <AuthPromptModal
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        message="Sign in with Google to view your submitted feedback."
+      />
     </div>
   );
 }

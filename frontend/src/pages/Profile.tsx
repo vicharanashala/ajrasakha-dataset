@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../services/api';
+import { authService, clearAuth } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AuthPromptModal } from '@/components/AuthPromptModal';
 import { User } from '../types';
 import {
   User as UserIcon,
@@ -24,6 +25,8 @@ export function Profile() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const [authDismissed, setAuthDismissed] = useState(false);
+
   // Form state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -41,11 +44,11 @@ export function Profile() {
   useEffect(() => {
     const storedUser = localStorage.getItem('ajrasakha_user');
     if (!storedUser) {
-      navigate('/signin');
+      // Show auth modal instead of redirecting to /signin (which doesn't exist)
       return;
     }
     fetchProfile();
-  }, [navigate]);
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -127,9 +130,9 @@ export function Profile() {
       setOtpSent(false);
       setResetOtp('');
       setNewPassword('');
-      // Clear local storage and redirect to sign in
-      localStorage.removeItem('ajrasakha_user');
-      navigate('/signin');
+      // Clear local storage and redirect to home
+      clearAuth();
+      navigate('/');
     } catch {
       setError('Failed to reset password. Please check your OTP.');
     } finally {
@@ -383,6 +386,12 @@ export function Profile() {
           </Card>
         )}
       </div>
+
+      <AuthPromptModal
+        open={!user && !authDismissed}
+        onOpenChange={(open) => { if (!open) setAuthDismissed(true); }}
+        message="Sign in with Google to view and edit your profile."
+      />
     </div>
   );
 }

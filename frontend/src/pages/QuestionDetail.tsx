@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FeedbackForm } from '@/components/FeedbackForm';
+import { AuthPromptModal } from '@/components/AuthPromptModal';
 import { AlertCircle, Loader2, ArrowLeft, ExternalLink, FileText } from 'lucide-react';
+
+const USER_STORAGE_KEY = "ajrasakha_user";
 
 export function QuestionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,9 +19,18 @@ export function QuestionDetail() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const isAuthenticated = !!localStorage.getItem(USER_STORAGE_KEY);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('ajrasakha_user');
+    // Show auth modal immediately if not signed in
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      // Still fetch data but prompt auth
+    }
+
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
@@ -235,6 +247,12 @@ export function QuestionDetail() {
           </Card>
         )}
       </div>
+
+      <AuthPromptModal
+        open={showAuthModal}
+        onOpenChange={setShowAuthModal}
+        message="You are not signed in yet. Please sign in with Google to view question details and submit feedback."
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   Res,
+  HttpException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
@@ -36,27 +37,39 @@ export class AuthController {
   constructor(private readonly authUseCases: AuthUseCases) {}
 
   @Post('signup')
-  @HttpCode(HttpStatus.CREATED)
-  async signup(@Body() dto: SignupDto) {
-    return this.authUseCases.signup(dto.email, dto.password);
+  @HttpCode(HttpStatus.FORBIDDEN)
+  async signup(@Body() _dto: SignupDto) {
+    throw new HttpException(
+      'Manual registration is disabled. Please use Google Sign-In.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   @Post('signin')
-  @HttpCode(HttpStatus.OK)
-  async signin(@Body() dto: SigninDto) {
-    return this.authUseCases.signin(dto.email, dto.password);
+  @HttpCode(HttpStatus.FORBIDDEN)
+  async signin(@Body() _dto: SigninDto) {
+    throw new HttpException(
+      'Manual login is disabled. Please use Google Sign-In.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   @Post('verify-otp')
-  @HttpCode(HttpStatus.OK)
-  async verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.authUseCases.verifyOtp(dto.email, dto.otp);
+  @HttpCode(HttpStatus.FORBIDDEN)
+  async verifyOtp(@Body() _dto: VerifyOtpDto) {
+    throw new HttpException(
+      'Manual OTP verification is disabled.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   @Post('resend-otp')
-  @HttpCode(HttpStatus.OK)
-  async resendOtp(@Body() dto: ResendOtpDto) {
-    return this.authUseCases.resendOtp(dto.email);
+  @HttpCode(HttpStatus.FORBIDDEN)
+  async resendOtp(@Body() _dto: ResendOtpDto) {
+    throw new HttpException(
+      'Manual OTP resend is disabled.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   @Get('profile')
@@ -77,18 +90,20 @@ export class AuthController {
   }
 
   @Post('request-password-reset')
-  @HttpCode(HttpStatus.OK)
-  async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
-    return this.authUseCases.requestPasswordReset(dto.email);
+  @HttpCode(HttpStatus.FORBIDDEN)
+  async requestPasswordReset(@Body() _dto: RequestPasswordResetDto) {
+    throw new HttpException(
+      'Manual password reset is disabled.',
+      HttpStatus.FORBIDDEN,
+    );
   }
 
   @Post('verify-password-reset')
-  @HttpCode(HttpStatus.OK)
-  async verifyPasswordReset(@Body() dto: VerifyPasswordResetDto) {
-    return this.authUseCases.verifyPasswordReset(
-      dto.email,
-      dto.otp,
-      dto.newPassword,
+  @HttpCode(HttpStatus.FORBIDDEN)
+  async verifyPasswordReset(@Body() _dto: VerifyPasswordResetDto) {
+    throw new HttpException(
+      'Manual password reset verification is disabled.',
+      HttpStatus.FORBIDDEN,
     );
   }
 
