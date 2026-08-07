@@ -521,9 +521,6 @@ export function Questions() {
 
   const isAuthenticated = !!localStorage.getItem(USER_STORAGE_KEY);
 
-  // Detect test session flag from test-login.html
-  const isTestSession = new URLSearchParams(window.location.search).get('test_session') === '1';
-
   // Get stored user for userId query param (tells backend to cap limit at 5)
   const storedUserRaw = localStorage.getItem(USER_STORAGE_KEY);
   const storedUser: User | null = storedUserRaw ? (JSON.parse(storedUserRaw) as User) : null;
