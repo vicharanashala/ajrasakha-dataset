@@ -32,9 +32,7 @@ export class QuestionController {
     };
 
     const pageNum = page ? parseInt(page, 10) : 1;
-    const rawLimit = limit ? parseInt(limit, 10) : 20;
-    // Always cap at 5 — UI renders 8 rows (5 data + 3 promo)
-    const limitNum = Math.min(rawLimit, 5);
+    const limitNum = limit ? parseInt(limit, 10) : 20;
 
     let searchEmbedding: number[] | undefined;
     if (embedding) {
