@@ -79,7 +79,7 @@ function Header({
         {/* Logo - left corner */}
         <div className="flex items-center gap-2 sm:gap-3 h-10 sm:h-12">
           <Link to="/questions">
-            <img src="/annam-logo.png" alt="Annam Logo" className="h-9 sm:h-12 w-auto" />
+            <img src="/annam-logo.png" alt="Annam Logo" className="h-12 sm:h-16 w-auto" />
           </Link>
         </div>
 
