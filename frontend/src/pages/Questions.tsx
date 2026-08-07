@@ -840,7 +840,7 @@ export function Questions() {
                   </div>
                 )}
 
-                {isAuthenticated && (
+                {!isAuthenticated && (
                   <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-[calc(3*4.25rem)] items-center justify-center">
                     <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/70 to-background/95 backdrop-blur-md" />
                     <p className="relative rounded-full border border-border/60 bg-background/90 px-4 py-1.5 text-sm font-medium text-foreground shadow-sm">

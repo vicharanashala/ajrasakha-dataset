@@ -122,7 +122,7 @@ function Header({
           </button>
 
           {/* User Menu Dropdown - only shown when user is logged in */}
-          {onToggleUserMenu && onNavigate && onSignOut && (
+          {isAuthenticated && onToggleUserMenu && onNavigate && onSignOut && (
             <div className="relative">
               <Button
                 variant="outline"
