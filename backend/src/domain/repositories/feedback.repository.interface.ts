@@ -13,6 +13,7 @@ export interface IFeedback {
   createdAt?: Date;
   updatedAt?: Date;
   reviewNote?: string;
+  isPushedToReviewSystem: boolean;
 }
 
 export interface CreateFeedbackDto {
@@ -22,6 +23,7 @@ export interface CreateFeedbackDto {
   type: FeedbackType;
   predefinedOption: string;
   comment: string;
+  isPushedToReviewSystem?: boolean;
 }
 
 export interface FeedbackRepository {

@@ -11,6 +11,7 @@ import { FeedbackStatus } from '../../infrastructure/database/schemas/feedback.s
 import { EmailService } from '../../infrastructure/services/email.service';
 import { UserEntity } from '../../infrastructure/database/schemas/user.schema';
 import { QuestionEntity } from '../../infrastructure/database/schemas/question.schema';
+import { openFeedbackInReviewSystem } from '../../infrastructure/services/review-system.service';
 
 @Injectable()
 export class FeedbackUseCase {
@@ -38,7 +39,16 @@ export class FeedbackUseCase {
       return updated;
     }
 
-    return this.feedbackRepository.create(data);
+    // Determine isPushedToReviewSystem from the review system call (non-fatal if it fails)
+    let isPushedToReviewSystem = false;
+    try {
+      const response = await openFeedbackInReviewSystem(data.questionId);
+      isPushedToReviewSystem = response.success;
+    } catch {
+      // Review system call failed — isPushedToReviewSystem stays false
+    }
+
+    return this.feedbackRepository.create({ ...data, isPushedToReviewSystem });
   }
 
   async listFeedbacks(options?: {

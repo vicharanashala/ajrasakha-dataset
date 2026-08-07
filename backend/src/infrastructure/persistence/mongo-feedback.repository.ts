@@ -28,6 +28,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       predefinedOption: data.predefinedOption,
       comment: data.comment,
       status: 'open',
+      isPushedToReviewSystem: data.isPushedToReviewSystem ?? false,
     });
     const saved = await feedback.save();
     return this.toIFeedback(saved);
@@ -183,6 +184,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       reviewNote: doc.reviewNote,
+      isPushedToReviewSystem: doc.isPushedToReviewSystem ?? false,
     };
   }
 
@@ -210,6 +212,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       createdAt: plain['createdAt'] as Date | undefined,
       updatedAt: plain['updatedAt'] as Date | undefined,
       reviewNote: plain['reviewNote'] as string | undefined,
+      isPushedToReviewSystem: (plain['isPushedToReviewSystem'] as boolean) ?? false,
     };
   }
 
@@ -228,6 +231,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       createdAt: doc['createdAt'] ? new Date(doc['createdAt'] as string) : undefined,
       updatedAt: doc['updatedAt'] ? new Date(doc['updatedAt'] as string) : undefined,
       reviewNote: doc['reviewNote'] as string | undefined,
+      isPushedToReviewSystem: doc['isPushedToReviewSystem'] as boolean ?? false,
     };
   }
 }

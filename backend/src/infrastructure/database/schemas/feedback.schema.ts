@@ -57,6 +57,9 @@ export class Feedback {
 
   @Prop({ type: String, required: false })
   reviewNote?: string;
+
+  @Prop({ type: Boolean, default: false })
+  isPushedToReviewSystem!: boolean;
 }
 
 export type FeedbackDocument = Feedback &
