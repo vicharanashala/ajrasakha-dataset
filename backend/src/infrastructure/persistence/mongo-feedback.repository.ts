@@ -29,6 +29,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       comment: data.comment,
       status: 'open',
       isPushedToReviewSystem: data.isPushedToReviewSystem ?? false,
+      pushToReviewSystemError: data.pushToReviewSystemError,
     });
     const saved = await feedback.save();
     return this.toIFeedback(saved);
@@ -185,6 +186,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       updatedAt: doc.updatedAt,
       reviewNote: doc.reviewNote,
       isPushedToReviewSystem: doc.isPushedToReviewSystem ?? false,
+      pushToReviewSystemError: (doc as unknown as { pushToReviewSystemError?: string }).pushToReviewSystemError,
     };
   }
 
@@ -213,6 +215,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       updatedAt: plain['updatedAt'] as Date | undefined,
       reviewNote: plain['reviewNote'] as string | undefined,
       isPushedToReviewSystem: (plain['isPushedToReviewSystem'] as boolean) ?? false,
+      pushToReviewSystemError: plain['pushToReviewSystemError'] as string | undefined,
     };
   }
 
@@ -231,7 +234,8 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       createdAt: doc['createdAt'] ? new Date(doc['createdAt'] as string) : undefined,
       updatedAt: doc['updatedAt'] ? new Date(doc['updatedAt'] as string) : undefined,
       reviewNote: doc['reviewNote'] as string | undefined,
-      isPushedToReviewSystem: doc['isPushedToReviewSystem'] as boolean ?? false,
+      isPushedToReviewSystem: (doc['isPushedToReviewSystem'] as boolean) ?? false,
+      pushToReviewSystemError: doc['pushToReviewSystemError'] as string | undefined,
     };
   }
 }

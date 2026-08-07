@@ -41,14 +41,19 @@ export class FeedbackUseCase {
 
     // Determine isPushedToReviewSystem from the review system call (non-fatal if it fails)
     let isPushedToReviewSystem = false;
+    let pushToReviewSystemError: string | undefined;
     try {
       const response = await openFeedbackInReviewSystem(data.questionId);
       isPushedToReviewSystem = response.success;
-    } catch {
+      if (!response.success) {
+        pushToReviewSystemError = response.error;
+      }
+    } catch (err) {
       // Review system call failed — isPushedToReviewSystem stays false
+      pushToReviewSystemError = err instanceof Error ? err.message : String(err);
     }
 
-    return this.feedbackRepository.create({ ...data, isPushedToReviewSystem });
+    return this.feedbackRepository.create({ ...data, isPushedToReviewSystem, pushToReviewSystemError });
   }
 
   async listFeedbacks(options?: {

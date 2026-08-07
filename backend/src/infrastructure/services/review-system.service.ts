@@ -3,6 +3,7 @@ const REVIEW_SYSTEM_AUTH_KEY = process.env['REVIEW_SYSTEM_AUTH_KEY'];
 
 export interface OpenFeedbackResponse {
   success: boolean;
+  error?: string;
 }
 
 /**
@@ -23,5 +24,17 @@ export async function openFeedbackInReviewSystem(
       body: JSON.stringify({ source: 'DATASET' }),
     },
   );
+
+  if (!res.ok) {
+    let error = `HTTP ${res.status}: ${res.statusText}`;
+    try {
+      const body = await res.json();
+      error = body?.error ?? body?.message ?? error;
+    } catch {
+      // use status text as fallback
+    }
+    return { success: false, error };
+  }
+
   return res.json() as Promise<OpenFeedbackResponse>;
 }

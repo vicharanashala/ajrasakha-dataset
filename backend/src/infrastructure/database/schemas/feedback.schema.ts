@@ -60,12 +60,16 @@ export class Feedback {
 
   @Prop({ type: Boolean, default: false })
   isPushedToReviewSystem!: boolean;
+
+  @Prop({ type: String, required: false })
+  pushToReviewSystemError?: string;
 }
 
 export type FeedbackDocument = Feedback &
   Document & {
     createdAt?: Date;
     updatedAt?: Date;
+    pushToReviewSystemError?: string;
   };
 
 export const FeedbackSchema = SchemaFactory.createForClass(Feedback);

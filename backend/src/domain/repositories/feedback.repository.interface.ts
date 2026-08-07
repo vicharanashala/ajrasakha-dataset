@@ -14,6 +14,7 @@ export interface IFeedback {
   updatedAt?: Date;
   reviewNote?: string;
   isPushedToReviewSystem: boolean;
+  pushToReviewSystemError?: string;
 }
 
 export interface CreateFeedbackDto {
@@ -24,6 +25,7 @@ export interface CreateFeedbackDto {
   predefinedOption: string;
   comment: string;
   isPushedToReviewSystem?: boolean;
+  pushToReviewSystemError?: string;
 }
 
 export interface FeedbackRepository {
