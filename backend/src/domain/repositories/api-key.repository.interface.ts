@@ -6,12 +6,13 @@ export interface ApiKey {
   isActive: boolean;
   lastUsedAt?: Date;
   expiresAt?: Date;
+  allowedOrigin?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface ApiKeyRepository {
-  create(props: { userId: string; key: string; name?: string; expiresAt?: Date }): Promise<ApiKey>;
+  create(props: { userId: string; key: string; name?: string; expiresAt?: Date; allowedOrigin?: string }): Promise<ApiKey>;
   findByKey(key: string): Promise<ApiKey | null>;
   findByUserId(userId: string): Promise<ApiKey[]>;
   updateLastUsed(id: string): Promise<void>;

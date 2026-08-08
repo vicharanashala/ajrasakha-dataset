@@ -19,6 +19,9 @@ export class ApiKeyEntity {
   @Prop({ type: String, required: false })
   name?: string;
 
+  @Prop({ type: String, required: false })
+  allowedOrigin?: string;
+
   @Prop({ type: Boolean, default: true })
   isActive!: boolean;
 

@@ -4,30 +4,37 @@ import {
   Query,
   Headers,
   UnauthorizedException,
+  ForbiddenException,
   HttpCode,
   HttpStatus,
   Inject,
   BadRequestException,
-  UseGuards,
 } from '@nestjs/common';
-import { AllowedOriginsGuard } from '../../infrastructure/auth/allowed-origins.guard';
-import type { ApiKeyRepository } from '../../domain/repositories/api-key.repository.interface';
-import { API_KEY_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { PublicDatasetUseCase } from '../../application/use-cases/public-dataset.use-case';
 import { FilterOptionsQueryDto } from '../../application/dtos/filter-options.dto';
+import type { ApiKeyRepository } from '../../domain/repositories/api-key.repository.interface';
+import type { UserRepository } from '../../domain/repositories/user.repository.interface';
+import { API_KEY_REPOSITORY } from '../../domain/repositories/repository.tokens';
+import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 
 @Controller('public')
-@UseGuards(AllowedOriginsGuard)
 export class PublicController {
   constructor(
     private readonly publicDatasetUseCase: PublicDatasetUseCase,
     @Inject(API_KEY_REPOSITORY)
     private readonly apiKeyRepository: ApiKeyRepository,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: UserRepository,
   ) {}
 
-  private async validateApiKey(authHeader: string): Promise<{ userId: string }> {
+  private async validateApiKey(
+    authHeader: string,
+    origin: string,
+  ): Promise<{ userId: string }> {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Authorization header with Bearer token is required');
+      throw new UnauthorizedException(
+        'Authorization header with Bearer token is required',
+      );
     }
     const key = authHeader.slice(7);
 
@@ -42,6 +49,19 @@ export class PublicController {
       throw new UnauthorizedException('API key has expired');
     }
 
+    // Origin restriction: skip if the key has no allowedOrigin (legacy keys)
+    // or if the user is whitelisted.
+    if (apiKey.allowedOrigin && apiKey.allowedOrigin !== origin) {
+      // Look up the user to check isWhitelisted status.
+      const user = await this.userRepository.findById(apiKey.userId);
+      const isWhitelisted = user?.isWhitelisted ?? false;
+      if (!isWhitelisted) {
+        throw new ForbiddenException(
+          'This API key is not valid for requests from this origin',
+        );
+      }
+    }
+
     // Fire-and-forget update of lastUsedAt
     this.apiKeyRepository.updateLastUsed(apiKey.id).catch(() => {});
 
@@ -52,6 +72,7 @@ export class PublicController {
   @HttpCode(HttpStatus.OK)
   async getQuestions(
     @Headers('authorization') authHeader: string,
+    @Headers('origin') origin: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('state') state?: string | string[],
@@ -59,7 +80,7 @@ export class PublicController {
     @Query('district') district?: string | string[],
     @Query('domain') domain?: string | string[],
   ) {
-    await this.validateApiKey(authHeader);
+    await this.validateApiKey(authHeader, origin);
 
     const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
     const limitNum = limit
@@ -75,8 +96,11 @@ export class PublicController {
 
   @Get('filters')
   @HttpCode(HttpStatus.OK)
-  async getAvailableFilters(@Headers('authorization') authHeader: string) {
-    await this.validateApiKey(authHeader);
+  async getAvailableFilters(
+    @Headers('authorization') authHeader: string,
+    @Headers('origin') origin: string,
+  ) {
+    await this.validateApiKey(authHeader, origin);
     return this.publicDatasetUseCase.getAvailableFilters();
   }
 
@@ -84,9 +108,10 @@ export class PublicController {
   @HttpCode(HttpStatus.OK)
   async getFilterOptions(
     @Headers('authorization') authHeader: string,
+    @Headers('origin') origin: string,
     @Query() query: FilterOptionsQueryDto,
   ) {
-    await this.validateApiKey(authHeader);
+    await this.validateApiKey(authHeader, origin);
 
     const { type } = query;
 

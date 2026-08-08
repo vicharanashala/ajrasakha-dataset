@@ -11,12 +11,13 @@ type ApiKey = {
   isActive: boolean;
   lastUsedAt?: Date;
   expiresAt?: Date;
+  allowedOrigin?: string;
   createdAt: Date;
   updatedAt: Date;
 };
 
 interface ApiKeyRepository {
-  create(props: { userId: string; key: string; name?: string; expiresAt?: Date }): Promise<ApiKey>;
+  create(props: { userId: string; key: string; name?: string; expiresAt?: Date; allowedOrigin?: string }): Promise<ApiKey>;
   findByKey(key: string): Promise<ApiKey | null>;
   findByUserId(userId: string): Promise<ApiKey[]>;
   updateLastUsed(id: string): Promise<void>;
@@ -35,12 +36,14 @@ export class MongoApiKeyRepository implements ApiKeyRepository {
     key: string;
     name?: string;
     expiresAt?: Date;
+    allowedOrigin?: string;
   }): Promise<ApiKey> {
     const created = await this.apiKeyModel.create({
       userId: new Types.ObjectId(props.userId),
       key: props.key,
       name: props.name,
       expiresAt: props.expiresAt,
+      allowedOrigin: props.allowedOrigin,
       isActive: true,
     });
     return this.toEntity(created);
@@ -86,6 +89,7 @@ export class MongoApiKeyRepository implements ApiKeyRepository {
       isActive: plain.isActive,
       lastUsedAt: plain.lastUsedAt,
       expiresAt: plain.expiresAt,
+      allowedOrigin: plain.allowedOrigin,
       createdAt: plain.createdAt,
       updatedAt: plain.updatedAt,
     };

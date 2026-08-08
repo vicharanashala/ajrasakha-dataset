@@ -60,6 +60,9 @@ export class UserEntity {
   })
   authProvider?: string;
 
+  @Prop({ type: Boolean, required: false, default: false })
+  isWhitelisted?: boolean;
+
   // Provided by `timestamps: true`
   createdAt!: Date;
   updatedAt!: Date;

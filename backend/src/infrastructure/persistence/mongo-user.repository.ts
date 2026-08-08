@@ -43,6 +43,7 @@ export class MongoUserRepository implements UserRepository {
       googleId: props.googleId,
       avatar: props.avatar,
       authProvider: props.authProvider,
+      isWhitelisted: props.isWhitelisted ?? false,
     });
     return this.toEntity(created);
   }
@@ -94,6 +95,7 @@ export class MongoUserRepository implements UserRepository {
       googleId: plain.googleId ?? undefined,
       avatar: plain.avatar ?? undefined,
       authProvider: (plain.authProvider as 'email' | 'google') ?? undefined,
+      isWhitelisted: plain.isWhitelisted ?? false,
       createdAt: plain.createdAt,
       updatedAt: plain.updatedAt,
     };

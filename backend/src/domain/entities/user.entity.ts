@@ -11,6 +11,7 @@ export interface User {
   googleId?: string;
   avatar?: string;
   authProvider?: 'email' | 'google';
+  isWhitelisted?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,4 +25,5 @@ export interface CreateUserProps {
   avatar?: string;
   isVerified?: boolean;
   authProvider?: 'email' | 'google';
+  isWhitelisted?: boolean;
 }

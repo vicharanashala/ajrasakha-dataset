@@ -10,7 +10,7 @@ export class ApiKeyUseCase {
     private readonly apiKeyRepository: ApiKeyRepository,
   ) {}
 
-  async generate(userId: string, name?: string): Promise<{ key: string; apiKey: ApiKey }> {
+  async generate(userId: string, name?: string, allowedOrigin?: string): Promise<{ key: string; apiKey: ApiKey }> {
     const rawKey = randomBytes(32).toString('hex');
     const prefixedKey = `ajr_${rawKey}`;
 
@@ -18,6 +18,7 @@ export class ApiKeyUseCase {
       userId,
       key: prefixedKey,
       name,
+      allowedOrigin,
     });
 
     return { key: prefixedKey, apiKey };

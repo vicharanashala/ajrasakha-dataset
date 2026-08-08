@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Headers,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -27,10 +28,15 @@ export class ApiKeyController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async generate(@Req() req: AuthenticatedRequest, @Body() body: { name?: string }) {
+  async generate(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: { name?: string },
+    @Headers('origin') origin: string,
+  ) {
     const { key, apiKey } = await this.apiKeyUseCase.generate(
       req.user.id,
       body.name,
+      origin,
     );
     // Return the full key only on creation — it cannot be retrieved again
     return {
