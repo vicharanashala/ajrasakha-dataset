@@ -8,6 +8,8 @@ import {
   type ApiKeyListItem,
   type ApiKeyInfo,
 } from "../services/api";
+
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -416,11 +418,11 @@ export function Documentation() {
                   <Key className="h-5 w-5" />
                   API Keys
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {isWhitelisted
-                    ? "Use this key to call the API from external tools like Postman or scripts. It will be shown only once — store it securely."
-                    : "Your API key is linked to your browser session. Use the API Playground below to test endpoints with your active credentials."}
-                </p>
+                {!isWhitelisted && (
+                  <p className="text-sm text-amber-600 dark:text-amber-500 border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 rounded-md px-3 py-2">
+                    Your API key is linked to your browser session. Use the API Playground below to test endpoints with your active credentials.
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="space-y-4">
 
