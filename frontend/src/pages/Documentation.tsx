@@ -177,7 +177,7 @@ function ApiKeyGeneratedModal({
       </DialogHeader>
       <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-4 py-3 my-4 overflow-x-auto">
         <code className="flex-1 text-sm font-mono text-foreground break-all">
-          {isWhitelisted ? apiKey.key : maskApiKey(apiKey.key)}
+          {maskApiKey(apiKey.key)}
         </code>
         {isWhitelisted && <CopyButton text={apiKey.key} />}
       </div>
