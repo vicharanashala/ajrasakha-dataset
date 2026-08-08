@@ -5,6 +5,7 @@ export interface User {
   lastName?: string;
   state?: string;
   isVerified: boolean;
+  isWhitelisted: boolean;
   avatar?: string;
   authProvider?: string;
   createdAt: string;

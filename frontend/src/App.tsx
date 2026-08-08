@@ -339,27 +339,30 @@ function GoogleAuthSuccess() {
         id: userId,
         email: decodeURIComponent(email),
         isVerified: true,
+        isWhitelisted: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       setUser(user);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 
-      // Fetch full profile (includes avatar) and update stored user
+      // Fetch full profile (includes avatar, isWhitelisted) and update stored user
       const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
       fetch(`${backendUrl}/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
         .then((profile) => {
-          if (profile?.avatar) {
-            const updatedUser = { ...user, avatar: profile.avatar };
-            setUser(updatedUser);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-          }
+          const updatedUser = {
+            ...user,
+            ...(profile.avatar && { avatar: profile.avatar }),
+            isWhitelisted: profile.isWhitelisted ?? false,
+          };
+          setUser(updatedUser);
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
         })
         .catch(() => {
-          // Avatar fetch failed — proceed without it
+          // Profile fetch failed — proceed without avatar/isWhitelisted
         })
         .finally(() => {
           window.location.href = '/questions';

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   FlaskConical,
   Loader2,
@@ -9,13 +8,14 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
-  Key,
   RefreshCw,
   X,
   FileJson,
   Copy,
+  Key,
+  User,
 } from "lucide-react";
-import type { AvailableFilters, FilterOptionType } from "@/services/api";
+import { type AvailableFilters, type FilterOptionType } from "@/services/api";
 
 // Re-export so callers can use it without an extra import
 export type { FilterOptionType };
@@ -50,9 +50,62 @@ const FIELD_BASE =
 const FIELD_SM = `${FIELD_BASE} h-8 text-xs`;
 const LABEL = "block text-xs font-medium text-muted-foreground mb-1.5";
 
+type AuthMode = "jwt" | "api-key";
+
 function getStoredKey(): string {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("playground_api_key") || "";
+}
+
+function AuthModeSelector({
+  mode,
+  onModeChange,
+  isWhitelisted,
+}: {
+  mode: AuthMode;
+  onModeChange: (m: AuthMode) => void;
+  isWhitelisted: boolean;
+}) {
+  // The auth mode is locked to match the user's whitelist status.
+  // Whitelisted -> API Key only. Non-whitelisted -> JWT only.
+  const isLocked = true;
+
+  return (
+    <div>
+      <label className={LABEL}>
+        Auth Mode
+        {isWhitelisted ? " (API Key)" : " (Session JWT)"}
+      </label>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          disabled={isLocked}
+          onClick={() => !isLocked && onModeChange("jwt")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border py-2 text-xs font-medium transition-colors ${
+            mode === "jwt"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-background text-muted-foreground hover:bg-muted"
+          } ${isLocked && mode !== "jwt" ? "opacity-40 cursor-not-allowed" : ""}`}
+        >
+          <User className="h-3.5 w-3.5" />
+          Session JWT
+        </button>
+        <button
+          type="button"
+          disabled={isLocked}
+          onClick={() => !isLocked && onModeChange("api-key")}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-md border py-2 text-xs font-medium transition-colors ${
+            mode === "api-key"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-background text-muted-foreground hover:bg-muted"
+          } ${isLocked && mode !== "api-key" ? "opacity-40 cursor-not-allowed" : ""}`}
+        >
+          <Key className="h-3.5 w-3.5" />
+          API Key
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function MethodPill({ className = "" }: { className?: string }) {
@@ -125,35 +178,6 @@ function PlaygroundEndpointSelector({
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function KeyInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div>
-      <label htmlFor="playground-api-key" className={LABEL}>
-        API Key
-      </label>
-      <div className="relative">
-        <Key className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          id="playground-api-key"
-          type="password"
-          autoComplete="off"
-          spellCheck={false}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="ajr_..."
-          className="h-9 pl-9 font-mono text-sm"
-        />
-      </div>
     </div>
   );
 }
@@ -370,22 +394,23 @@ function StatusBadge({
 interface ApiPlaygroundModalProps {
   open: boolean;
   onClose: () => void;
-  existingKey: string | null;
   filters: AvailableFilters | null;
   filtersLoading: boolean;
   onLoadFilters: () => void;
+  isWhitelisted: boolean;
 }
 
 export function ApiPlaygroundModal({
   open,
   onClose,
-  existingKey,
+  isWhitelisted,
   filters,
   filtersLoading,
   onLoadFilters,
 }: ApiPlaygroundModalProps) {
   const [endpoint, setEndpoint] = useState<PlaygroundEndpoint>("questions");
-  const [apiKey, setApiKey] = useState(existingKey || getStoredKey());
+  const [authMode, setAuthMode] = useState<AuthMode>(isWhitelisted ? "api-key" : "jwt");
+  const [apiKey, setApiKey] = useState(getStoredKey);
   const [params, setParams] = useState<Params>({});
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<{
@@ -398,12 +423,6 @@ export function ApiPlaygroundModal({
 
   const baseUrl = import.meta.env.VITE_API_URL || "/api";
   const builtUrl = buildUrl(baseUrl, endpoint, params);
-
-  // Persist key to localStorage
-  const handleKeyChange = useCallback((v: string) => {
-    setApiKey(v);
-    localStorage.setItem("playground_api_key", v);
-  }, []);
 
   // Reset response when params change
   useEffect(() => {
@@ -437,7 +456,7 @@ export function ApiPlaygroundModal({
   }, []);
 
   const handleSend = useCallback(async () => {
-    if (!apiKey.trim()) {
+    if (authMode === "api-key" && !apiKey.trim()) {
       setResponse({
         status: 0,
         statusText: "",
@@ -461,11 +480,23 @@ export function ApiPlaygroundModal({
     setLoading(true);
     setResponse(null);
 
+    const headers: Record<string, string> = {};
+    if (authMode === "api-key") {
+      headers["Authorization"] = `Bearer ${apiKey.trim()}`;
+    }
+    // JWT auth mode: browser sends cookie/header via the axios interceptor
+    // when called through the `api` instance. Since we use raw axios here,
+    // grab the token from localStorage manually.
+    if (authMode === "jwt") {
+      const token = localStorage.getItem("ajrasakha_token");
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const start = Date.now();
     try {
       const url = buildUrl(baseUrl, endpoint, params);
       const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${apiKey.trim()}` },
+        headers,
         validateStatus: () => true,
       });
       setResponse({
@@ -486,7 +517,7 @@ export function ApiPlaygroundModal({
     } finally {
       setLoading(false);
     }
-  }, [apiKey, endpoint, params, baseUrl]);
+  }, [authMode, apiKey, endpoint, params, baseUrl]);
 
   if (!open) return null;
 
@@ -556,8 +587,38 @@ export function ApiPlaygroundModal({
                 }}
               />
 
-              {/* API Key */}
-              <KeyInput value={apiKey} onChange={handleKeyChange} />
+              {/* Auth mode — show selector only when the user's type is unknown (dev fallback) */}
+              <AuthModeSelector mode={authMode} onModeChange={setAuthMode} isWhitelisted={isWhitelisted} />
+
+              {/* API Key input — shown only when API key mode is selected */}
+              {authMode === "api-key" && (
+                <div>
+                  <label className={LABEL}>API Key</label>
+                  <input
+                    type="password"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={apiKey}
+                    onChange={(e) => {
+                      setApiKey(e.target.value);
+                      localStorage.setItem("playground_api_key", e.target.value);
+                    }}
+                    placeholder="ajr_..."
+                    className={FIELD_SM}
+                  />
+                </div>
+              )}
+
+              {/* JWT auth notice */}
+              {authMode === "jwt" && (
+                <div>
+                  <label className={LABEL}>Authentication</label>
+                  <div className="rounded-md border border-border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                    Your session JWT is sent automatically. Non-whitelisted
+                    users only.
+                  </div>
+                </div>
+              )}
 
               {/* Query params */}
               <QueryParams

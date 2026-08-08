@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   apiKeyService,
   publicDatasetService,
+  getUser,
   type AvailableFilters,
   type ApiKeyListItem,
   type ApiKeyInfo,
@@ -152,10 +153,12 @@ function ApiKeyGeneratedModal({
   apiKey,
   open,
   onClose,
+  isWhitelisted,
 }: {
   apiKey: ApiKeyInfo;
   open: boolean;
   onClose: () => void;
+  isWhitelisted: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -165,14 +168,16 @@ function ApiKeyGeneratedModal({
           API Key Generated
         </DialogTitle>
         <DialogDescription className="pt-1">
-          Copy and store this key securely now — it will never be displayed again.
+          {isWhitelisted
+            ? "Copy and store this key securely now — it will never be displayed again."
+            : "Your API key has been generated. You can use it to test endpoints via the API Playground below."}
         </DialogDescription>
       </DialogHeader>
       <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-4 py-3 my-4 overflow-x-auto">
         <code className="flex-1 text-sm font-mono text-foreground break-all">
-          {maskApiKey(apiKey.key)}
+          {isWhitelisted ? apiKey.key : maskApiKey(apiKey.key)}
         </code>
-        <CopyButton text={apiKey.key} />
+        {isWhitelisted && <CopyButton text={apiKey.key} />}
       </div>
       <DialogFooter>
         <Button onClick={onClose}>Done</Button>
@@ -225,6 +230,7 @@ function SectionNav({ activeSection }: { activeSection: string | null }) {
 export function Documentation() {
   const navigate = useNavigate();
   const { toasts, addToast, removeToast } = useToast();
+  const isWhitelisted = getUser()?.isWhitelisted ?? false;
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -234,7 +240,6 @@ export function Documentation() {
   const [newKeyModalOpen, setNewKeyModalOpen] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
   const [keyName, setKeyName] = useState("");
-  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [filters, setFilters] = useState<AvailableFilters | null>(null);
   const [filtersLoading, setFiltersLoading] = useState(false);
   const [filtersError, setFiltersError] = useState<string | null>(null);
@@ -325,7 +330,6 @@ export function Documentation() {
       const key = await apiKeyService.generate(keyName || undefined);
       setNewKey(key);
       setNewKeyModalOpen(true);
-      setActiveKey(key.key);
       setFilters({ states: [] });
       // Refresh key list
       await fetchApiKeys();
@@ -348,7 +352,6 @@ export function Documentation() {
     setConfirmDialogOpen(false);
     try {
       await apiKeyService.revoke(keyToRevoke.id);
-      if (activeKey === keyToRevoke.id) setActiveKey(null);
       await fetchApiKeys();
     } catch {
       setKeyError("Failed to revoke API key");
@@ -414,8 +417,9 @@ export function Documentation() {
                   API Keys
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Generate an API key to authenticate your requests. Keys are
-                  shown only once at creation.
+                  {isWhitelisted
+                    ? "Use this key to call the API from external tools like Postman or scripts. It will be shown only once — store it securely."
+                    : "Your API key is linked to your browser session. Use the API Playground below to test endpoints with your active credentials."}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -826,17 +830,15 @@ export function Documentation() {
                       <Hash className="h-4 w-4" />
                       Available State Filter Values
                     </p>
-                    {activeKey && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => fetchFilters()}
-                        className="text-xs"
-                      >
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Refresh
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => fetchFilters()}
+                      className="text-xs"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Refresh
+                    </Button>
                   </div>
                   {!filters && !filtersError ? (
                     <p className="text-sm text-muted-foreground py-4 text-center border border-dashed border-border rounded-lg">
@@ -1109,6 +1111,7 @@ export function Documentation() {
                 apiKey={newKey}
                 open={newKeyModalOpen}
                 onClose={() => setNewKeyModalOpen(false)}
+                isWhitelisted={isWhitelisted}
               />
             )}
 
@@ -1187,10 +1190,10 @@ export function Documentation() {
       <ApiPlaygroundModal
         open={playgroundOpen}
         onClose={() => setPlaygroundOpen(false)}
-        existingKey={null}
         filters={filters}
         filtersLoading={filtersLoading}
         onLoadFilters={fetchFilters}
+        isWhitelisted={isWhitelisted}
       />
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />

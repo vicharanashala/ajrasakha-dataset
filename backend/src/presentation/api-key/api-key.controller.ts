@@ -5,7 +5,6 @@ import {
   Delete,
   Body,
   Param,
-  Headers,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -28,20 +27,15 @@ export class ApiKeyController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async generate(
-    @Req() req: AuthenticatedRequest,
-    @Body() body: { name?: string },
-    @Headers('origin') origin: string,
-  ) {
+  async generate(@Req() req: AuthenticatedRequest, @Body() body: { name?: string }) {
     const { key, apiKey } = await this.apiKeyUseCase.generate(
       req.user.id,
       body.name,
-      origin,
     );
-    // Return the full key only on creation — it cannot be retrieved again
+    // Return the full key only on creation — it cannot be retrieved again.
     return {
       id: apiKey.id,
-      key, // only returned here, never again
+      key,
       name: apiKey.name,
       isActive: apiKey.isActive,
       createdAt: apiKey.createdAt,
@@ -52,7 +46,7 @@ export class ApiKeyController {
   @HttpCode(HttpStatus.OK)
   async list(@Req() req: AuthenticatedRequest) {
     const keys = await this.apiKeyUseCase.listByUser(req.user.id);
-    // Mask the key — only show last 8 chars
+    // Mask the key — only show last 8 chars.
     return keys.map((k) => ({
       id: k.id,
       keyPreview: `ajr_••••••••••••${k.key.slice(-8)}`,

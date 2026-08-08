@@ -287,6 +287,7 @@ export const apiKeyService = {
   revoke: async (id: string): Promise<void> => {
     await api.delete(`/api-keys/${id}`);
   },
+
 };
 
 export interface PublicQuestionFilters {
