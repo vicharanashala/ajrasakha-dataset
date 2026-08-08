@@ -101,19 +101,23 @@ export class EmailService {
     const statusLabel = isAccepted ? 'Accepted' : 'Not Accepted';
     const statusColor = isAccepted ? '#2e7d32' : '#c62828';
     const statusBg = isAccepted ? '#e8f5e9' : '#fdecea';
+    const statusBgAccent = isAccepted ? '#4caf50' : '#ef5350';
     const subject = isAccepted
-      ? 'Your feedback was accepted 🎉'
-      : 'Update on the feedback you submitted';
+      ? 'Your feedback was accepted — Ajrasakha Dataset'
+      : 'Update on your feedback — Ajrasakha Dataset';
 
     const smtpFrom = this.configService.get<string>(
       'SMTP_FROM',
       'abiramk@annam.ai',
     );
-    const frontendUrl = this.configService.get<string>(
+    const frontendUrl = this.configService.get(
       'FRONTEND_URL',
       'http://localhost:5173',
     );
-    const questionLink = `${frontendUrl.replace(/\/$/, '')}/questions/${encodeURIComponent(questionId)}`;
+    const baseUrl = String(frontendUrl).replace(/\/$/, '');
+    const logoUrl = `${baseUrl}/logo.png`;
+    const annamLogoUrl = `${baseUrl}/annam-logo.png`;
+    const questionLink = `${baseUrl}/questions/${encodeURIComponent(questionId)}`;
 
     // Basic HTML-escaping so user-supplied text can't break the markup
     const escapeHtml = (value: string): string =>
@@ -129,90 +133,158 @@ export class EmailService {
     const safeNote = note ? escapeHtml(note) : '';
 
     const bodyMessage = isAccepted
-      ? `Great news — the feedback you submitted has been <strong>reviewed and accepted</strong> by our team. Thank you for helping us improve the quality of our questions.`
-      : `Thank you for taking the time to submit feedback. After review, our team has decided <strong>not to accept</strong> this particular submission. We appreciate you flagging it — every piece of feedback helps us improve.`;
+      ? `Great news — the feedback you submitted has been reviewed and accepted by our team. Thank you for helping us improve the quality of our agricultural questions.`
+      : `Thank you for taking the time to submit feedback. After review, our team has decided not to accept this particular submission. We appreciate you flagging it — every piece of feedback helps us improve the dataset.`;
 
     const noteHtml = safeNote
-      ? `<tr>
-         <td style="padding: 0 24px 24px;">
-           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fff8e1; border-radius: 8px; border-left: 4px solid #ffb300;">
-             <tr>
-               <td style="padding: 14px 16px;">
-                 <p style="margin: 0 0 6px; color: #8a6d00; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">Note from reviewer</p>
-                 <p style="margin: 0; color: #6b5300; font-size: 14px; line-height: 1.5;">${safeNote}</p>
-               </td>
-             </tr>
-           </table>
-         </td>
-       </tr>`
+      ? `
+      <tr>
+        <td style="padding: 0 32px 24px 32px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                 style="background-color:#fffdf5;border:1px solid #f0e6c8;border-radius:8px;">
+            <tr>
+              <td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;">
+                <p style="margin:0 0 6px 0;font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;color:#8a7330;">
+                  Note from reviewer
+                </p>
+                <p style="margin:0;font-size:14px;line-height:22px;color:#4a4a4a;">
+                  ${safeNote}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>`
       : '';
 
-    const html = `
-    <div style="background: #f4f4f7; padding: 32px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06);">
-        <tr>
-          <td style="padding: 28px 24px 8px;">
-            <span style="display: inline-block; background: ${statusBg}; color: ${statusColor}; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px;">
-              Feedback ${statusLabel}
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 12px 24px 8px;">
-            <p style="margin: 0 0 4px; font-size: 18px; font-weight: 600; color: #1a1a1a;">Hi ${safeUserName},</p>
-            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #444;">${bodyMessage}</p>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px 24px 8px;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #f8f9fa; border-radius: 8px;">
-              <tr>
-                <td style="padding: 16px;">
-                  <p style="margin: 0 0 8px; color: #6b6b6b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;">Question</p>
-                  <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #222; font-style: italic;">"${safeQuestionText}"</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        ${noteHtml}
-        <tr>
-          <td style="padding: 8px 24px 28px;">
-            <a href="${questionLink}" style="display: inline-block; background: #1976d2; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 10px 20px; border-radius: 6px;">
-              View Question
-            </a>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 16px 24px; border-top: 1px solid #eee;">
-            <p style="margin: 0; color: #999; font-size: 12px; line-height: 1.5;">
-              This is an automated message — please don't reply directly to this email.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </div>
-  `;
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f4f5f7;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600"
+               style="width:100%;max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding:24px 32px;border-bottom:1px solid #eeeeee;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td width="44" valign="middle">
+                    <img src="${logoUrl}" alt="Ajrasakha" width="40" height="40" style="display:block;border:0;border-radius:8px;" />
+                  </td>
+                  <td valign="middle" style="padding-left:12px;font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0;font-size:16px;font-weight:bold;color:#1a1a1a;">Ajrasakha Dataset</p>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#6b7280;">Agricultural Question Collection</p>
+                  </td>
+                  <td width="90" align="right" valign="middle">
+                    <img src="${annamLogoUrl}" alt="Annam.Ai" height="28" style="display:block;border:0;" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Status badge -->
+          <tr>
+            <td style="padding:28px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <span style="display:inline-block;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:bold;
+                           color:${statusColor};background-color:${statusBg};border:1px solid ${statusBgAccent};">
+                Feedback ${statusLabel}
+              </span>
+            </td>
+          </tr>
+
+          <!-- Greeting + message -->
+          <tr>
+            <td style="padding:12px 32px 20px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0 0 12px 0;font-size:18px;font-weight:bold;color:#1a1a1a;">Hi ${safeUserName},</p>
+              <p style="margin:0;font-size:15px;line-height:24px;color:#4a4a4a;">${bodyMessage}</p>
+            </td>
+          </tr>
+
+          <!-- Question -->
+          <tr>
+            <td style="padding:0 32px 24px 32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                     style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
+                <tr>
+                  <td style="padding:16px 20px;font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0 0 6px 0;font-size:12px;font-weight:bold;letter-spacing:0.5px;text-transform:uppercase;color:#6b7280;">
+                      Question
+                    </p>
+                    <p style="margin:0;font-size:15px;line-height:23px;color:#1a1a1a;">"${safeQuestionText}"</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          ${noteHtml}
+
+          <!-- CTA -->
+          <tr>
+            <td style="padding:0 32px 32px 32px;font-family:Arial,Helvetica,sans-serif;">
+              <a href="${questionLink}"
+                 style="display:inline-block;padding:12px 24px;border-radius:8px;background-color:#2e7d32;color:#ffffff;
+                        font-size:14px;font-weight:bold;text-decoration:none;">
+                View Question
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px;background-color:#fafafa;border-top:1px solid #eeeeee;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td style="font-family:Arial,Helvetica,sans-serif;">
+                    <p style="margin:0 0 4px 0;font-size:12px;line-height:18px;color:#6b7280;">
+                      This is an automated message from Ajrasakha Dataset powered by Annam.Ai.
+                    </p>
+                    <p style="margin:0;font-size:12px;line-height:18px;color:#9ca3af;">
+                      Please do not reply directly to this email.
+                    </p>
+                  </td>
+                  <td width="80" align="right" valign="middle">
+                    <img src="${annamLogoUrl}" alt="Annam.Ai" height="22" style="display:block;border:0;opacity:0.7;" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
     const textLines = [
       `Hi ${userName},`,
       '',
       isAccepted
-        ? 'Great news — the feedback you submitted has been reviewed and accepted by our team.'
-        : 'Thank you for your feedback. After review, our team has decided not to accept this particular submission.',
+        ? 'Great news — the feedback you submitted has been reviewed and accepted by our team. Thank you for helping us improve our agricultural questions.'
+        : 'Thank you for your feedback. After review, our team has decided not to accept this particular submission. We appreciate you flagging it.',
       '',
       `Question: "${questionText}"`,
       `Link: ${questionLink}`,
+      '',
+      '—',
+      'Ajrasakha Dataset powered by Annam.Ai',
+      'This is an automated message. Please do not reply to this email.',
     ];
 
     if (note) {
-      textLines.push('', `Note from reviewer: "${note}"`);
+      textLines.splice(6, 0, '', `Note from reviewer: "${note}"`);
     }
-
-    textLines.push(
-      '',
-      'This is an automated message. Please do not reply to this email.',
-    );
 
     const text = textLines.join('\n');
 

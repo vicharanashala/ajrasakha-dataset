@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ToastContainer, useToast } from "@/components/ui/toast";
+import { ApiPlaygroundModal } from "@/components/ApiPlayground";
 import {
   Key,
   Copy,
@@ -30,6 +31,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   TriangleAlert,
+  FlaskConical,
 } from "lucide-react";
 import {
   Dialog,
@@ -243,6 +245,7 @@ export function Documentation() {
   const [filterErrorExamplesExpanded, setFilterErrorExamplesExpanded] = useState(false);
   const [keyToRevoke, setKeyToRevoke] = useState<{ id: string; name?: string } | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>("api-keys");
+  const [playgroundOpen, setPlaygroundOpen] = useState(false);
 
 
   const fetchApiKeys = useCallback(async () => {
@@ -258,11 +261,15 @@ export function Documentation() {
     }
   }, []);
 
-  const fetchFilters = useCallback(async (apiKey: string) => {
+  const fetchFilters = useCallback(async () => {
     setFiltersLoading(true);
     setFiltersError(null);
     try {
-      const data = await publicDatasetService.getFilters(apiKey);
+      // Use the public endpoint — no API key required.
+      // If the user has provided a key in the playground, we could also call getFilters(key)
+      // for the full (state+crop+district) filter list, but getAvailableFilters is sufficient
+      // for the state dropdown and doesn't require auth.
+      const data = await publicDatasetService.getAvailableFilters();
       setFilters(data);
     } catch {
       setFiltersError("Failed to load filter values");
@@ -552,10 +559,21 @@ export function Documentation() {
             {/* Endpoint Documentation */}
             <Card className="shadow-sm border-border/50">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Terminal className="h-5 w-5" />
-                  API Endpoint
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <Terminal className="h-5 w-5" />
+                    API Endpoint
+                  </CardTitle>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setPlaygroundOpen(true)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    Try in Playground
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Endpoint URL */}
@@ -812,7 +830,7 @@ export function Documentation() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => fetchFilters(activeKey)}
+                        onClick={() => fetchFilters()}
                         className="text-xs"
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
@@ -1165,6 +1183,15 @@ export function Documentation() {
           </div>
         </div>
       </div>
+
+      <ApiPlaygroundModal
+        open={playgroundOpen}
+        onClose={() => setPlaygroundOpen(false)}
+        existingKey={null}
+        filters={filters}
+        filtersLoading={filtersLoading}
+        onLoadFilters={fetchFilters}
+      />
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>

@@ -8,13 +8,16 @@ import {
   HttpStatus,
   Inject,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
+import { AllowedOriginsGuard } from '../../infrastructure/auth/allowed-origins.guard';
 import type { ApiKeyRepository } from '../../domain/repositories/api-key.repository.interface';
 import { API_KEY_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { PublicDatasetUseCase } from '../../application/use-cases/public-dataset.use-case';
 import { FilterOptionsQueryDto } from '../../application/dtos/filter-options.dto';
 
 @Controller('public')
+@UseGuards(AllowedOriginsGuard)
 export class PublicController {
   constructor(
     private readonly publicDatasetUseCase: PublicDatasetUseCase,
