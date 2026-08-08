@@ -58,6 +58,21 @@ export const clearAuth = (): void => {
   localStorage.removeItem('ajrasakha_token');
 };
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  isWhitelisted: boolean;
+  isVerified: boolean;
+  createdAt: string;
+}
+
+export const getProfile = async (): Promise<UserProfile> => {
+  const res = await api.get('/auth/profile');
+  return res.data;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',

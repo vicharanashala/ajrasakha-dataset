@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   apiKeyService,
   publicDatasetService,
-  getUser,
+  getProfile,
   type AvailableFilters,
   type ApiKeyListItem,
   type ApiKeyInfo,
@@ -232,7 +232,7 @@ function SectionNav({ activeSection }: { activeSection: string | null }) {
 export function Documentation() {
   const navigate = useNavigate();
   const { toasts, addToast, removeToast } = useToast();
-  const isWhitelisted = getUser()?.isWhitelisted ?? false;
+  const [isWhitelisted, setIsWhitelisted] = useState(false);
   const [loadingKeys, setLoadingKeys] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -283,6 +283,13 @@ export function Documentation() {
     } finally {
       setFiltersLoading(false);
     }
+  }, []);
+
+  // Fetch user profile (includes isWhitelisted) on mount
+  useEffect(() => {
+    getProfile()
+      .then((profile) => setIsWhitelisted(profile.isWhitelisted))
+      .catch(() => {}); // non-whitelisted defaults to false
   }, []);
 
   // Fetch API keys + available filter options on mount
