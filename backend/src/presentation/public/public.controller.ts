@@ -51,6 +51,9 @@ export class PublicController {
 
     // Origin restriction: skip if the key has no allowedOrigin (legacy keys)
     // or if the user is whitelisted.
+    console.log(
+      `[OriginCheck] origin="${origin}" allowedOrigin="${apiKey.allowedOrigin}" keyId="${apiKey.id}"`,
+    );
     if (apiKey.allowedOrigin && apiKey.allowedOrigin !== origin) {
       // Look up the user to check isWhitelisted status.
       const user = await this.userRepository.findById(apiKey.userId);
