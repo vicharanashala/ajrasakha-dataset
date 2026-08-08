@@ -32,6 +32,6 @@ import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
     GoogleStrategy,
     GoogleAuthGuard,
   ],
-  exports: [JwtService, JwtAuthGuard, GoogleAuthGuard, EmailModule],
+  exports: [JwtService, JwtAuthGuard, GoogleAuthGuard, EmailModule, USER_REPOSITORY],
 })
 export class AuthModule {}

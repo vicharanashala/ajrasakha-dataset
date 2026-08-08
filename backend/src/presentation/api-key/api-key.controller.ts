@@ -9,9 +9,11 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Inject,
 } from '@nestjs/common';
 import { ApiKeyUseCase } from '../../application/use-cases/api-key.use-case';
-import { AuthUseCases } from '../../application/use-cases/auth.use-case';
+import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
+import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import { JwtAuthGuard } from '../../infrastructure/auth/jwt-auth.guard';
 
 interface AuthenticatedRequest {
@@ -26,7 +28,7 @@ interface AuthenticatedRequest {
 export class ApiKeyController {
   constructor(
     private readonly apiKeyUseCase: ApiKeyUseCase,
-    private readonly authUseCases: AuthUseCases,
+    @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
   @Post()
@@ -38,11 +40,11 @@ export class ApiKeyController {
     );
     // Only return the real key to whitelisted users.
     // Non-whitelisted users get a masked placeholder — they use JWT auth.
-    const profile = await this.authUseCases.getProfile(req.user.id);
+    const profile = await this.userRepository.findById(req.user.id);
     const maskedKey = `ajr_••••••••••••${key.slice(-8)}`;
     return {
       id: apiKey.id,
-      key: profile.isWhitelisted ? key : maskedKey,
+      key: profile?.isWhitelisted ? key : maskedKey,
       name: apiKey.name,
       isActive: apiKey.isActive,
       createdAt: apiKey.createdAt,
