@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut, BookOpen } from "lucide-react";
 import { setToken, setUser, clearAuth, authService } from "./services/api";
+import { isGoogleAuthEnabled } from "@/lib/utils";
 
 const USER_STORAGE_KEY = "ajrasakha_user";
 
@@ -72,6 +73,11 @@ function Header({
   const isDocs = location.pathname === "/documentation";
   const storedUser = JSON.parse(localStorage.getItem(USER_STORAGE_KEY) || '{}');
   const displayName = storedUser?.firstName || storedUser?.email?.split("@")[0] || "User";
+  // Documentation itself never required auth on the backend — the sign-in
+  // prompt here is a product choice for real users. When Google Auth is
+  // disabled (local development), skip it so docs stay reachable even
+  // though there's no way to sign in. Staging/production are unaffected.
+  const googleAuthEnabled = isGoogleAuthEnabled();
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
@@ -93,7 +99,7 @@ function Header({
           {showDocs && (
             <button
               onClick={() => {
-                if (!isAuthenticated) { onAuthRequired?.(); return; }
+                if (!isAuthenticated && googleAuthEnabled) { onAuthRequired?.(); return; }
                 navigate("/documentation");
               }}
               className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md border transition-colors text-sm ${
@@ -237,6 +243,22 @@ function ProtectedLayout() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    () => !!localStorage.getItem('auth_token')
+  );
+
+
+  useEffect(() => {
+    if (isAuthenticated || isGoogleAuthEnabled()) return;
+    authService.devLogin()
+      .then(({ user }) => {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+        setIsAuthenticated(true);
+      })
+      .catch(() => {
+        // Dev login unavailable — leave the user signed out.
+      });
+  }, [isAuthenticated]);
 
   useEffect(() => {
     authService.getProfile().then((profile) => {
@@ -244,7 +266,7 @@ function ProtectedLayout() {
     }).catch(() => {
       // Failed to fetch avatar — leave as undefined
     });
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -264,6 +286,7 @@ function ProtectedLayout() {
 
   const handleSignOut = () => {
     clearAuth();
+    setIsAuthenticated(false);
     setShowLogoutDialog(false);
     navigate('/');
   };
@@ -279,7 +302,7 @@ function ProtectedLayout() {
           onNavigate={(path) => navigate(path)}
           onSignOut={() => setShowLogoutDialog(true)}
           avatar={avatar}
-          isAuthenticated={!!localStorage.getItem('auth_token')}
+          isAuthenticated={isAuthenticated}
           onAuthRequired={() => setShowAuthModal(true)}
         />
         <main className="flex-1 w-full">

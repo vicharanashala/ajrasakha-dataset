@@ -7,13 +7,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { ConfigService } from '@nestjs/config';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
 import type { User } from '../../domain/entities/user.entity';
 import { OtpService } from '../../infrastructure/services/otp.service';
 import { EmailService } from '../../infrastructure/services/email.service';
 import { JwtService } from '../../infrastructure/auth/jwt.service';
 import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
+import { isDevAuthBypassAllowed } from '../../infrastructure/auth/dev-auth.config';
 import type { UpdateProfileDto } from '../dtos/update-profile.dto';
+
+// Fixed, idempotent dev user: POST /auth/dev-login always finds-or-creates
+// this single row rather than minting a new one per call. Only ever reached
+// when GOOGLE_AUTH_ENABLED=false and NODE_ENV!=='production' (see
+// isDevAuthBypassAllowed), so it can't appear in staging/production data.
+const DEV_USER_EMAIL = 'dev@localhost';
 
 @Injectable()
 export class AuthUseCases {
@@ -23,6 +31,7 @@ export class AuthUseCases {
     private readonly otpService: OtpService,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async signup(
@@ -142,9 +151,14 @@ export class AuthUseCases {
   async signin(
     email: string,
     password: string,
-  ): Promise<{ message: string; user: Partial<User>; token: string; requiresVerification?: boolean }> {
+  ): Promise<{
+    message: string;
+    user: Partial<User>;
+    token: string;
+    requiresVerification?: boolean;
+  }> {
     const normalizedEmail = email.toLowerCase();
-    
+
     const user = await this.userRepository.findByEmail(normalizedEmail);
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -159,7 +173,11 @@ export class AuthUseCases {
 
     if (user.isVerified === false) {
       // Check if OTP is still valid
-      if (user.otp && user.otpExpiresAt && !this.otpService.isExpired(user.otpExpiresAt)) {
+      if (
+        user.otp &&
+        user.otpExpiresAt &&
+        !this.otpService.isExpired(user.otpExpiresAt)
+      ) {
         throw new UnauthorizedException({
           message: 'Please verify your email before signing in',
           email: user.email,
@@ -171,7 +189,8 @@ export class AuthUseCases {
       await this.userRepository.update(user.id, { otp, otpExpiresAt });
       await this.emailService.sendOtp(user.email, otp, 'signup');
       throw new UnauthorizedException({
-        message: 'Your verification code has expired. A new OTP has been sent to your email. Please verify your email before signing in.',
+        message:
+          'Your verification code has expired. A new OTP has been sent to your email. Please verify your email before signing in.',
         email: user.email,
       });
     }
@@ -321,5 +340,25 @@ export class AuthUseCases {
       token,
       user: this.sanitizeUser(user),
     };
+  }
+
+
+  async devLogin(): Promise<{ token: string; user: Partial<User> }> {
+    if (!isDevAuthBypassAllowed(this.configService)) {
+      throw new NotFoundException();
+    }
+
+    let user = await this.userRepository.findByEmail(DEV_USER_EMAIL);
+    if (!user) {
+      user = await this.userRepository.create({
+        email: DEV_USER_EMAIL,
+        firstName: 'Dev',
+        lastName: 'User',
+        isVerified: true,
+        authProvider: 'dev',
+      });
+    }
+
+    return this.generateTokenForUser(user.id);
   }
 }

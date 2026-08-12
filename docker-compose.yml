@@ -16,6 +16,7 @@ services:
       - MONGODB_DB_NAME=${MONGODB_DB_NAME:-agriai}
       - PORT=3000
       - CORS_ORIGINS=http://localhost:3000
+      - GOOGLE_AUTH_ENABLED=${GOOGLE_AUTH_ENABLED:-false}
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_USER=${SMTP_USER:-your-email@gmail.com}

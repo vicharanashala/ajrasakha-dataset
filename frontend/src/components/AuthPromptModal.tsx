@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ShieldOff } from 'lucide-react';
+import { isGoogleAuthEnabled } from '@/lib/utils';
 
 interface AuthPromptModalProps {
   open: boolean;
@@ -15,6 +16,8 @@ interface AuthPromptModalProps {
 }
 
 export function AuthPromptModal({ open, onOpenChange, message }: AuthPromptModalProps) {
+  const googleAuthEnabled = isGoogleAuthEnabled();
+
   const handleGoogleSignIn = () => {
     const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
     window.location.href = `${backendUrl}/auth/google`;
@@ -29,13 +32,21 @@ export function AuthPromptModal({ open, onOpenChange, message }: AuthPromptModal
           </div>
           <DialogTitle>Sign in required</DialogTitle>
           <DialogDescription className="text-center">
-            {message || 'You need to sign in to access this content. Use Google Sign-In to continue.'}
+            {googleAuthEnabled
+              ? message || 'You need to sign in to access this content. Use Google Sign-In to continue.'
+              : 'Sign-in is disabled in this environment, so this content is not available right now.'}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="sm:justify-center">
           <Button
             type="button"
             onClick={handleGoogleSignIn}
+            disabled={!googleAuthEnabled}
+            title={
+              googleAuthEnabled
+                ? undefined
+                : 'Google Sign-In is disabled in this environment'
+            }
             className="w-full gap-2"
           >
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="h-4 w-4">
