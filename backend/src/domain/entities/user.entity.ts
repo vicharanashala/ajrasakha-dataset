@@ -10,7 +10,7 @@ export interface User {
   otpExpiresAt?: Date;
   googleId?: string;
   avatar?: string;
-  authProvider?: 'email' | 'google';
+  authProvider?: 'email' | 'google' | 'dev';
   isWhitelisted?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +24,6 @@ export interface CreateUserProps {
   googleId?: string;
   avatar?: string;
   isVerified?: boolean;
-  authProvider?: 'email' | 'google';
+  authProvider?: 'email' | 'google' | 'dev';
   isWhitelisted?: boolean;
 }

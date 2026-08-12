@@ -131,4 +131,16 @@ export class AuthController {
     const redirectUrl = `${process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173'}/auth-success?token=${result.token}&userId=${user.id}&email=${encodeURIComponent(user.email)}`;
     return res.redirect(redirectUrl);
   }
+
+  /**
+   * Dev-only stand-in for Google Sign-In. Only reachable when
+   * GOOGLE_AUTH_ENABLED=false and NODE_ENV!=='production' (enforced in
+   * AuthUseCases.devLogin, which throws NotFoundException otherwise) — so in
+   * staging/production this behaves exactly like a route that doesn't exist.
+   */
+  @Post('dev-login')
+  @HttpCode(HttpStatus.OK)
+  async devLogin() {
+    return this.authUseCases.devLogin();
+  }
 }
