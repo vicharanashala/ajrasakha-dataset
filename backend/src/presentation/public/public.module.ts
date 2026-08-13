@@ -37,5 +37,6 @@ import { AuthModule } from '../auth/auth.module';
       useClass: MongoUserRepository,
     },
   ],
+  exports: [PublicDatasetUseCase],
 })
 export class PublicModule {}

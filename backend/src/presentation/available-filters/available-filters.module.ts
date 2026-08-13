@@ -1,17 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-  QuestionEntity,
-  QuestionSchema,
-} from '../../infrastructure/database/schemas/question.schema';
 import { AvailableFiltersController } from './available-filters.controller';
+import { PublicModule } from '../public/public.module';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: QuestionEntity.name, schema: QuestionSchema },
-    ]),
-  ],
+  imports: [PublicModule],
   controllers: [AvailableFiltersController],
 })
 export class AvailableFiltersModule {}
