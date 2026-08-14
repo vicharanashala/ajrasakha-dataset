@@ -48,6 +48,26 @@ export class FeedbackController {
     return { total };
   }
 
+  /**
+   * GET /feedbacks/list — unfiltered paginated list of feedbacks (email,
+   * questionId, tag, createdAt), requires API key. Consumed by the review
+   * system's dataset-list view.
+   */
+  @Get('list')
+  @UseGuards(ApiKeyGuard)
+  @HttpCode(HttpStatus.OK)
+  async getDatasetList(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const pageSizeNum = pageSize
+      ? Math.min(100, Math.max(1, parseInt(pageSize, 10)))
+      : 10;
+
+    return this.feedbackUseCase.getDatasetList(pageNum, pageSizeNum);
+  }
+
   /** GET /feedbacks — paginated list (requires JWT) */
   @Get()
   @UseGuards(JwtAuthGuard)

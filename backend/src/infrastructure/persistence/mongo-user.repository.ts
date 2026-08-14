@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import type { UserRepository } from '../../domain/repositories/user.repository.interface';
+import type {
+  UserRepository,
+  PaginatedDatasetUsers,
+} from '../../domain/repositories/user.repository.interface';
 import type { User, CreateUserProps } from '../../domain/entities/user.entity';
 import {
   UserEntity,
@@ -79,6 +82,37 @@ export class MongoUserRepository implements UserRepository {
 
   async count(): Promise<number> {
     return this.userModel.countDocuments().exec();
+  }
+
+  async findListBasic(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetUsers> {
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      this.userModel
+        .find()
+        .select('firstName lastName email createdAt')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.count(),
+    ]);
+
+    return {
+      data: docs.map((doc) => ({
+        name: [doc.firstName, doc.lastName].filter(Boolean).join(' ').trim(),
+        email: doc.email,
+        createdAt: doc.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   private toEntity(doc: UserEntityDocument): User {

@@ -53,6 +53,21 @@ export interface PaginatedQuestions {
   totalPages: number;
 }
 
+/** Minimal question shape exposed to the review system's dataset-list metrics endpoint. */
+export interface DatasetQuestionListItem {
+  id: string;
+  question: string;
+  createdAt: Date;
+}
+
+export interface PaginatedDatasetQuestions {
+  data: DatasetQuestionListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface QuestionRepository {
   findAll(
     filters: QuestionFilters,
@@ -69,4 +84,9 @@ export interface QuestionRepository {
   ): Promise<Question[]>;
   /** Total number of questions, unfiltered. */
   countAll(): Promise<number>;
+  /** Unfiltered, minimal-field paginated list — used by the dataset-list metrics endpoint. */
+  findListBasic(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetQuestions>;
 }

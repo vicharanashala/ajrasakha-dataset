@@ -1,10 +1,14 @@
 import { Types } from 'mongoose';
-import { FeedbackType, FeedbackStatus } from '../../infrastructure/database/schemas/feedback.schema';
+import {
+  FeedbackType,
+  FeedbackStatus,
+} from '../../infrastructure/database/schemas/feedback.schema';
 
 export interface IFeedback {
   id: string;
   questionId: string | Types.ObjectId;
-  userId: { firstName?: string; lastName?: string; email?: string } | Types.ObjectId;
+  userId:
+    { firstName?: string; lastName?: string; email?: string } | Types.ObjectId;
   answerId?: string | Types.ObjectId;
   type: FeedbackType;
   predefinedOption: string;
@@ -28,6 +32,27 @@ export interface CreateFeedbackDto {
   pushToReviewSystemError?: string;
 }
 
+/** Minimal feedback shape exposed to the review system's dataset-list metrics endpoint. */
+export interface DatasetFeedbackListItem {
+  email: string;
+  questionId: string;
+  tag: string;
+  type: FeedbackType;
+  predefinedOption: string;
+  comment: string;
+  reviewNote?: string;
+  status: FeedbackStatus;
+  createdAt: Date;
+}
+
+export interface PaginatedDatasetFeedbacks {
+  data: DatasetFeedbackListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface FeedbackRepository {
   create(data: CreateFeedbackDto): Promise<IFeedback>;
   findById(id: string): Promise<IFeedback | null>;
@@ -37,7 +62,13 @@ export interface FeedbackRepository {
     userId?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }>;
+  }): Promise<{
+    data: IFeedback[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>;
   findByQuestionIdAndUserId(
     questionId: string,
     userId: string,
@@ -48,9 +79,18 @@ export interface FeedbackRepository {
     id: string,
     data: Partial<CreateFeedbackDto>,
   ): Promise<IFeedback | null>;
-  updateStatus(id: string, status: FeedbackStatus, note: string): Promise<IFeedback | null>;
+  updateStatus(
+    id: string,
+    status: FeedbackStatus,
+    note: string,
+  ): Promise<IFeedback | null>;
   countPendingByQuestionId(questionId: string): Promise<number>;
   /** Total number of feedbacks, unfiltered. */
   countAll(): Promise<number>;
+  /** Unfiltered, minimal-field paginated list — used by the dataset-list metrics endpoint. */
+  findListBasic(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetFeedbacks>;
   delete(id: string): Promise<boolean>;
 }
