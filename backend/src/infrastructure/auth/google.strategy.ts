@@ -4,6 +4,13 @@ import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
 import { USER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import type { UserRepository } from '../../domain/repositories/user.repository.interface';
+import { isGoogleAuthEnabled } from './google-auth.config';
+
+// Placeholder used only when Google Auth is disabled (GOOGLE_AUTH_ENABLED=false) so
+// passport-oauth2's constructor — which requires non-empty clientID/clientSecret —
+// doesn't throw during Nest DI bootstrap. GoogleAuthGuard rejects requests before this
+// strategy is ever invoked in that case, so this value is never used to talk to Google.
+const DISABLED_PLACEHOLDER = 'google-auth-disabled';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -11,9 +18,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
     private readonly configService: ConfigService,
   ) {
+    const enabled = isGoogleAuthEnabled(configService);
     super({
-      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
-      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
+      clientID:
+        (enabled && configService.get<string>('GOOGLE_CLIENT_ID')) ||
+        DISABLED_PLACEHOLDER,
+      clientSecret:
+        (enabled && configService.get<string>('GOOGLE_CLIENT_SECRET')) ||
+        DISABLED_PLACEHOLDER,
       callbackURL:
         configService.get<string>('GOOGLE_CALLBACK_URL') ||
         '/api/auth/google/callback',

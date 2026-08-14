@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { isGoogleAuthEnabled } from '@/lib/utils';
 
 interface SignInProps {
   onSwitchToSignUp: () => void;
@@ -26,6 +27,7 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const googleAuthEnabled = isGoogleAuthEnabled();
 
   const handleGoogleSignin = () => {
     // Redirect to backend Google OAuth endpoint
@@ -94,6 +96,12 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
           type="button"
           variant="outline"
           onClick={handleGoogleSignin}
+          disabled={!googleAuthEnabled}
+          title={
+            googleAuthEnabled
+              ? undefined
+              : 'Google Sign-In is disabled in this environment'
+          }
           className="w-full"
         >
           <svg
@@ -121,6 +129,11 @@ export function SignIn({ onSwitchToSignUp, onSignedIn }: SignInProps) {
           </svg>
           Continue with Google
         </Button>
+        {!googleAuthEnabled && (
+          <p className="text-center text-xs text-muted-foreground">
+            Google Sign-In is disabled in this environment.
+          </p>
+        )}
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">

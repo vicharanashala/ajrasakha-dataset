@@ -176,6 +176,20 @@ export const authService = {
     return response.data;
   },
 
+  // Dev-only stand-in for Google Sign-In. Only succeeds against a backend
+  // running with GOOGLE_AUTH_ENABLED=false in a non-production environment —
+  // the backend returns 404 otherwise, matching a route that doesn't exist.
+  devLogin: async (): Promise<{ token: string; user: User }> => {
+    const response = await api.post('/auth/dev-login');
+    if (response.data.token) {
+      setToken(response.data.token);
+    }
+    if (response.data.user) {
+      setUser(response.data.user);
+    }
+    return response.data;
+  },
+
   logout: (): void => {
     clearAuth();
   },

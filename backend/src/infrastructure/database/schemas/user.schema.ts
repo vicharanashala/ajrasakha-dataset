@@ -55,7 +55,7 @@ export class UserEntity {
   @Prop({
     type: String,
     required: false,
-    enum: ['email', 'google'],
+    enum: ['email', 'google', 'dev'],
     default: 'email',
   })
   authProvider?: string;
