@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { questionService } from '../services/api';
+import { questionService, publicDatasetService } from '../services/api';
 import type { Question, PaginatedQuestions, User } from '../types';
 import {
   Table,
@@ -19,45 +19,6 @@ import { AuthPromptModal } from '@/components/AuthPromptModal';
 import { AlertCircle, Loader2, Search, MapPin, Leaf, X, ChevronDown } from 'lucide-react';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
-
-const STATES = [
-  'Andaman and Nicobar Islands',
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chandigarh',
-  'Chhattisgarh',
-  'Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi (National Capital Territory)',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jammu and Kashmir',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Ladakh',
-  'Lakshadweep',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Puducherry',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-] as const;
 
 const CROPS = [
   "Adapathiyan",
@@ -518,6 +479,8 @@ export function Questions() {
   const [filters, setFilters] = useState<QuestionFilters>({ status: 'closed' as const });
   const [searchInput, setSearchInput] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [states, setStates] = useState<string[]>([]);
+  const [statesLoading, setStatesLoading] = useState(true);
 
   const isAuthenticated = !!localStorage.getItem(USER_STORAGE_KEY);
 
@@ -527,6 +490,25 @@ export function Questions() {
   // Authenticated users see all (limit 20); unauthenticated see 5 questions
   const DB_LIMIT = isAuthenticated ? 20 : 5;
 
+  // Fetch the available states for the state filter dropdown
+  useEffect(() => {
+    let cancelled = false;
+    setStatesLoading(true);
+    publicDatasetService
+      .getAvailableFilters()
+      .then((data) => {
+        if (!cancelled) setStates(data.states);
+      })
+      .catch((err) => {
+        console.error('Failed to load available states', err);
+      })
+      .finally(() => {
+        if (!cancelled) setStatesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Handle row click — prompt auth if not signed in
   const handleRowClick = (questionId: string) => {
@@ -631,10 +613,11 @@ export function Questions() {
                 if (!isAuthenticated) { setShowAuthModal(true); return; }
                 handleFilterChange("state", e.target.value);
               }}
-              className="h-10 w-36 cursor-pointer appearance-none rounded-lg border border-border/70 bg-background pl-9 pr-9 text-sm transition-colors hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/40 sm:w-44"
+              disabled={statesLoading}
+              className="h-10 w-36 cursor-pointer appearance-none rounded-lg border border-border/70 bg-background pl-9 pr-9 text-sm transition-colors hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60 sm:w-44"
             >
-              <option value="">All States</option>
-              {STATES.map((state) => (
+              <option value="">{statesLoading ? "Loading states…" : "All States"}</option>
+              {states.map((state) => (
                 <option key={state} value={state}>
                   {state}
                 </option>

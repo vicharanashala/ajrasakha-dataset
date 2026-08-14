@@ -10,6 +10,7 @@ import { Model, PipelineStage } from 'mongoose';
 import { ANSWER_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { QuestionEntity, QuestionEntityDocument, QuestionStatus } from '../../infrastructure/database/schemas/question.schema';
 import type { FilterOptionsQueryDto } from '../dtos/filter-options.dto';
+import { getStatesFromReviewSystem, getDistrictsFromReviewSystem } from '../../infrastructure/services/review-system.service';
 
 export interface PublicQuestionFilters {
   state?: string | string[];
@@ -124,15 +125,15 @@ export class PublicDatasetUseCase {
   }
 
   async getAvailableFilters(): Promise<AvailableFilters> {
-    const closedFilter = { status: 'closed' as QuestionStatus };
-
-    const [states] = await Promise.all([
-      this.questionModel.distinct('details.state', closedFilter).exec(),
-    ]);
-
-    return {
-      states: states.filter(Boolean).sort() as string[],
-    };
+    try {
+      const statesResponse = await getStatesFromReviewSystem();
+      return {
+        states: statesResponse.map((s) => s.stateNameEnglish).filter(Boolean).sort(),
+      };
+    } catch (error) {
+      console.error('Failed to fetch states from Review System', error);
+      return { states: [] };
+    }
   }
 
   async getFilterOptions(
@@ -169,13 +170,30 @@ export class PublicDatasetUseCase {
 
     switch (dto.type) {
       case 'district': {
-        const districts = await this.questionModel
-          .distinct('details.district', baseQuery)
-          .exec();
-        return {
-          type: 'district',
-          values: districts.filter(Boolean).sort() as string[],
-        };
+        try {
+          if (!dto.state || dto.state.length === 0) {
+            return { type: 'district', values: [] };
+          }
+          
+          const requestedStateName = Array.isArray(dto.state) ? dto.state[0] : dto.state;
+          const states = await getStatesFromReviewSystem();
+          const matchingState = states.find(
+            (s) => s.stateNameEnglish.toLowerCase() === requestedStateName.toLowerCase(),
+          );
+          
+          if (!matchingState) {
+            return { type: 'district', values: [] };
+          }
+
+          const districts = await getDistrictsFromReviewSystem(matchingState.stateCode);
+          return {
+            type: 'district',
+            values: districts.map((d) => d.districtNameEnglish).filter(Boolean).sort(),
+          };
+        } catch (error) {
+          console.error('Failed to fetch districts from Review System', error);
+          return { type: 'district', values: [] };
+        }
       }
 
       case 'crop': {
