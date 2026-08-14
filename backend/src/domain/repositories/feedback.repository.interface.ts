@@ -50,5 +50,7 @@ export interface FeedbackRepository {
   ): Promise<IFeedback | null>;
   updateStatus(id: string, status: FeedbackStatus, note: string): Promise<IFeedback | null>;
   countPendingByQuestionId(questionId: string): Promise<number>;
+  /** Total number of feedbacks, unfiltered. */
+  countAll(): Promise<number>;
   delete(id: string): Promise<boolean>;
 }

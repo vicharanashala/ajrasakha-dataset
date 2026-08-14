@@ -39,6 +39,15 @@ export class FeedbackController {
     });
   }
 
+  /** GET /feedbacks/total — total number of feedbacks in the dataset (requires API key) */
+  @Get('total')
+  @UseGuards(ApiKeyGuard)
+  @HttpCode(HttpStatus.OK)
+  async getTotalCount() {
+    const total = await this.feedbackUseCase.getTotalCount();
+    return { total };
+  }
+
   /** GET /feedbacks — paginated list (requires JWT) */
   @Get()
   @UseGuards(JwtAuthGuard)

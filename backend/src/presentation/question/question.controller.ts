@@ -1,6 +1,7 @@
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { QuestionUseCase } from '../../application/use-cases/question.use-case';
 import type { QuestionFilters } from '../../domain/repositories/question.repository.interface';
+import { ApiKeyGuard } from '../../infrastructure/auth/api-key.guard';
 
 @Controller('questions')
 export class QuestionController {
@@ -77,6 +78,14 @@ export class QuestionController {
       status: status as QuestionFilters['status'],
       source: source as QuestionFilters['source'],
     });
+  }
+
+ 
+  @Get('total')
+  @UseGuards(ApiKeyGuard)
+  async getTotalCount() {
+    const total = await this.questionUseCase.getTotalCount();
+    return { total };
   }
 
   @Get(':id')

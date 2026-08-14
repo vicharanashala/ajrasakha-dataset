@@ -67,4 +67,6 @@ export interface QuestionRepository {
     limit: number,
     filters?: QuestionFilters,
   ): Promise<Question[]>;
+  /** Total number of questions, unfiltered. */
+  countAll(): Promise<number>;
 }

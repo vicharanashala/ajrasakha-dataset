@@ -167,6 +167,10 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     } as Record<string, unknown>).exec();
   }
 
+  async countAll(): Promise<number> {
+    return this.feedbackModel.countDocuments().exec();
+  }
+
   async delete(id: string): Promise<boolean> {
     const result = await this.feedbackModel.findByIdAndDelete(id);
     return !!result;

@@ -49,6 +49,10 @@ export class InMemoryUserRepository implements UserRepository {
     return updatedUser;
   }
 
+  count(): Promise<number> {
+    return Promise.resolve(this.users.length);
+  }
+
   private generateId(): string {
     return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }

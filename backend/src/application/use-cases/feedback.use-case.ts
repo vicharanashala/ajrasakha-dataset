@@ -124,4 +124,9 @@ export class FeedbackUseCase {
   async getUserFeedbacks(userId: string): Promise<IFeedback[]> {
     return this.feedbackRepository.findByUserId(userId);
   }
+
+  /** Total number of feedbacks, unfiltered — used by the dataset metrics endpoint. */
+  async getTotalCount(): Promise<number> {
+    return this.feedbackRepository.countAll();
+  }
 }

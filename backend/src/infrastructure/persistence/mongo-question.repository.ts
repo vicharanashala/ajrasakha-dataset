@@ -192,6 +192,10 @@ export class MongoQuestionRepository implements QuestionRepository {
     return scored.map((s) => this.toEntity(s.doc));
   }
 
+  async countAll(): Promise<number> {
+    return this.questionModel.countDocuments().exec();
+  }
+
   private cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length || a.length === 0) return 0;
 

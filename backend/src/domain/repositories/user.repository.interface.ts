@@ -5,4 +5,6 @@ export interface UserRepository {
   findById(id: string): Promise<User | null>;
   create(props: CreateUserProps): Promise<User>;
   update(id: string, props: Partial<User>): Promise<User | null>;
+  /** Total number of users, unfiltered. */
+  count(): Promise<number>;
 }

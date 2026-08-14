@@ -53,6 +53,11 @@ export class QuestionUseCase {
   ): Promise<Question[]> {
     return this.questionRepository.searchByVector(embedding, limit, filters);
   }
+
+  /** Total number of questions, unfiltered — used by the dataset metrics endpoint. */
+  async getTotalCount(): Promise<number> {
+    return this.questionRepository.countAll();
+  }
 }
 
 type QuestionRepository = {
@@ -69,6 +74,7 @@ type QuestionRepository = {
     limit: number,
     filters?: QuestionFilters,
   ): Promise<Question[]>;
+  countAll(): Promise<number>;
 };
 
 type FeedbackRepository = {

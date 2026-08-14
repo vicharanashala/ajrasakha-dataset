@@ -77,6 +77,10 @@ export class MongoUserRepository implements UserRepository {
     return updated ? this.toEntity(updated) : null;
   }
 
+  async count(): Promise<number> {
+    return this.userModel.countDocuments().exec();
+  }
+
   private toEntity(doc: UserEntityDocument): User {
     const plain = doc.toObject({ virtuals: true }) as UserEntity & {
       _id: Types.ObjectId;
