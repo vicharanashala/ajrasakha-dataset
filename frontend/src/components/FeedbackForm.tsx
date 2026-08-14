@@ -22,6 +22,7 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
           setFeedbackType(existing.type);
           setSelectedOption(existing.predefinedOption);
           setComment(existing.comment);
+          setFeedbackStatus(existing.status || null);
           setSubmitted(true);
         }
       } catch {
@@ -68,7 +70,7 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
     setError(null);
 
     try {
-      await feedbackService.create({
+      const response = await feedbackService.create({
         questionId,
         userId,
         answerId,
@@ -76,6 +78,7 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
         predefinedOption: selectedOption,
         comment: comment.trim(),
       });
+      setFeedbackStatus(response.status || null);
       setSubmitted(true);
     } catch {
       setError('Failed to submit feedback. Please try again.');
@@ -98,7 +101,8 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
                 Your feedback helps us improve the quality of answers.
               </p>
             </div>
-            <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm">
+            <div className="mt-2 p-3 bg-muted/50 rounded-lg text-sm w-full">
+              <div className="flex items-center justify-between mb-2">
               <p className="text-muted-foreground">
                 <span className="font-medium text-foreground">
                   {feedbackType === 'thumbs_up' ? '👍 Positive' : '👎 Negative'}
@@ -106,15 +110,20 @@ export function FeedbackForm({ questionId, userId, answerId }: FeedbackFormProps
                 {' - '}
                 {selectedOption}
               </p>
-              <p className="mt-2 text-foreground">{comment}</p>
+                {feedbackStatus && (
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    feedbackStatus.toLowerCase() === 'accepted' || feedbackStatus.toLowerCase() === 'accept'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : feedbackStatus.toLowerCase() === 'rejected' || feedbackStatus.toLowerCase() === 'reject'
+                      ? 'bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400'
+                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}>
+                    Status: {feedbackStatus.charAt(0).toUpperCase() + feedbackStatus.slice(1).toLowerCase()}
+                  </span>
+                )}
+              </div>
+              <p className="text-foreground">{comment}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSubmitted(false)}
-            >
-              Edit Feedback
-            </Button>
           </div>
         </CardContent>
       </Card>

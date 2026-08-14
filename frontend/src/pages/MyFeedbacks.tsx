@@ -146,6 +146,19 @@ export function MyFeedbacks() {
                             )}
                             {feedback.type === 'thumbs_up' ? 'Positive' : 'Negative'}
                           </div>
+                          {feedback.status && (
+                            <div
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                                feedback.status.toLowerCase() === 'accepted' || feedback.status.toLowerCase() === 'accept'
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : feedback.status.toLowerCase() === 'rejected' || feedback.status.toLowerCase() === 'reject'
+                                  ? 'bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400'
+                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              }`}
+                            >
+                              Status: {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1).toLowerCase()}
+                            </div>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             {formatDate(feedback.createdAt)}
                           </span>

@@ -50,6 +50,7 @@ export interface IFeedback {
   type: FeedbackType;
   predefinedOption: string;
   comment: string;
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
 }
