@@ -34,7 +34,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Sun, Moon, User as UserIcon, MessageCircle, ChevronDown, LogOut, BookOpen } from "lucide-react";
-import { setToken, setUser, clearAuth, authService } from "./services/api";
+import { setToken, setUser, authService } from "./services/api";
 import { isGoogleAuthEnabled } from "@/lib/utils";
 
 const USER_STORAGE_KEY = "ajrasakha_user";
@@ -244,7 +244,7 @@ function ProtectedLayout() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    () => !!localStorage.getItem('auth_token')
+    () => !!localStorage.getItem(USER_STORAGE_KEY)
   );
 
 
@@ -261,6 +261,7 @@ function ProtectedLayout() {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     authService.getProfile().then((profile) => {
       setAvatar(profile.avatar);
     }).catch(() => {
@@ -284,8 +285,8 @@ function ProtectedLayout() {
     setIsDarkMode((prev) => !prev);
   };
 
-  const handleSignOut = () => {
-    clearAuth();
+  const handleSignOut = async () => {
+    await authService.logout();
     setIsAuthenticated(false);
     setShowLogoutDialog(false);
     navigate('/');

@@ -96,6 +96,7 @@ export class MongoUserRepository implements UserRepository {
       avatar: plain.avatar ?? undefined,
       authProvider: (plain.authProvider as 'email' | 'google') ?? undefined,
       isWhitelisted: plain.isWhitelisted ?? false,
+      refreshTokenHash: plain.refreshTokenHash ?? undefined,
       createdAt: plain.createdAt,
       updatedAt: plain.updatedAt,
     };

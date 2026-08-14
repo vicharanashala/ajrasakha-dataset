@@ -20,7 +20,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = this.jwtService.verifyToken(token);
+      const payload = this.jwtService.verifyAccessToken(token);
       // Attach user info to request for use in controllers
       (request as any).user = {
         id: payload.sub,

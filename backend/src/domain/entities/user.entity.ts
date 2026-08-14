@@ -12,6 +12,7 @@ export interface User {
   avatar?: string;
   authProvider?: 'email' | 'google' | 'dev';
   isWhitelisted?: boolean;
+  refreshTokenHash?: string;
   createdAt: Date;
   updatedAt: Date;
 }

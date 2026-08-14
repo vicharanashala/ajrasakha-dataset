@@ -82,7 +82,7 @@ export class AuthUseCases {
   async verifyOtp(
     email: string,
     otp: string,
-  ): Promise<{ message: string; user: Partial<User>; token?: string }> {
+  ): Promise<{ message: string; user: Partial<User>; accessToken?: string; refreshToken?: string }> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new BadRequestException('Invalid email or OTP');
@@ -115,13 +115,14 @@ export class AuthUseCases {
       otpExpiresAt: undefined,
     });
 
-    // Generate JWT token for newly verified users
-    const token = this.jwtService.generateToken(updated!.id, updated!.email);
+    // Generate tokens for newly verified users
+    const { accessToken, refreshToken } = await this.generateAuthTokens(updated! as User);
 
     return {
       message: 'Email verified successfully',
       user: this.sanitizeUser(updated!),
-      token,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -154,7 +155,8 @@ export class AuthUseCases {
   ): Promise<{
     message: string;
     user: Partial<User>;
-    token: string;
+    accessToken: string;
+    refreshToken: string;
     requiresVerification?: boolean;
   }> {
     const normalizedEmail = email.toLowerCase();
@@ -200,12 +202,13 @@ export class AuthUseCases {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const token = this.jwtService.generateToken(user.id, user.email);
+    const { accessToken, refreshToken } = await this.generateAuthTokens(user as User);
 
     return {
       message: 'Signed in successfully',
       user: this.sanitizeUser(user),
-      token,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -328,22 +331,61 @@ export class AuthUseCases {
     return sanitized;
   }
 
+  async generateAuthTokens(user: User): Promise<{ accessToken: string; refreshToken: string }> {
+    const accessToken = this.jwtService.generateAccessToken(user.id, user.email);
+    const refreshToken = this.jwtService.generateRefreshToken(user.id, user.email);
+    const refreshTokenHash = createHash('sha256').update(refreshToken).digest('hex');
+    
+    await this.userRepository.update(user.id, { refreshTokenHash });
+    
+    return { accessToken, refreshToken };
+  }
+
   async generateTokenForUser(
     userId: string,
-  ): Promise<{ token: string; user: Partial<User> }> {
+  ): Promise<{ accessToken: string; refreshToken: string; user: Partial<User> }> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    const token = this.jwtService.generateToken(user.id, user.email);
+    const { accessToken, refreshToken } = await this.generateAuthTokens(user as User);
     return {
-      token,
+      accessToken,
+      refreshToken,
       user: this.sanitizeUser(user),
     };
   }
 
+  async refreshAccessToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string; user: Partial<User> }> {
+    try {
+      const payload = this.jwtService.verifyRefreshToken(refreshToken);
+      const user = await this.userRepository.findById(payload.sub);
+      
+      if (!user || !user.refreshTokenHash) {
+        throw new UnauthorizedException('Invalid session');
+      }
 
-  async devLogin(): Promise<{ token: string; user: Partial<User> }> {
+      const hash = createHash('sha256').update(refreshToken).digest('hex');
+      if (hash !== user.refreshTokenHash) {
+        throw new UnauthorizedException(`Hash mismatch! DB has ${user.refreshTokenHash}, but token hashed to ${hash}`);
+      }
+
+      return this.generateTokenForUser(user.id);
+    } catch (error: any) {
+      if (error instanceof UnauthorizedException && error.message.includes('Hash mismatch')) {
+        throw error; // Rethrow our custom hash mismatch error
+      }
+      throw new UnauthorizedException('JWT verification failed: ' + error.message);
+    }
+  }
+
+  async logout(userId: string): Promise<void> {
+    await this.userRepository.update(userId, { refreshTokenHash: undefined });
+  }
+
+  async devLogin(): Promise<{ accessToken: string; refreshToken: string; user: Partial<User> }> {
     if (!isDevAuthBypassAllowed(this.configService)) {
       throw new NotFoundException();
     }

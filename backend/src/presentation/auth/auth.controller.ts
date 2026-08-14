@@ -10,6 +10,7 @@ import {
   Req,
   Res,
   HttpException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthUseCases } from '../../application/use-cases/auth.use-case';
@@ -127,8 +128,18 @@ export class AuthController {
     }
     // Generate JWT token for the user
     const result = await this.authUseCases.generateTokenForUser(user.id);
-    // Redirect to frontend with token
-    const redirectUrl = `${process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173'}/auth-success?token=${result.token}&userId=${user.id}&email=${encodeURIComponent(user.email)}`;
+    
+    // Set refresh token in HttpOnly cookie
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to frontend with access token
+    const redirectUrl = `${process.env.CORS_ORIGINS?.split(',')[0] || 'http://localhost:5173'}/auth-success?token=${result.accessToken}&userId=${user.id}&email=${encodeURIComponent(user.email)}`;
     return res.redirect(redirectUrl);
   }
 
@@ -140,7 +151,56 @@ export class AuthController {
    */
   @Post('dev-login')
   @HttpCode(HttpStatus.OK)
-  async devLogin() {
-    return this.authUseCases.devLogin();
+  async devLogin(@Res({ passthrough: true }) res: Response) {
+    const result = await this.authUseCases.devLogin();
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return { token: result.accessToken, user: result.user };
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      throw new UnauthorizedException('No refresh token provided');
+    }
+
+    const result = await this.authUseCases.refreshAccessToken(refreshToken);
+    
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return { token: result.accessToken, user: result.user };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async logout(
+    @Req() req: AuthenticatedRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.authUseCases.logout(req.user.id);
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+    return { message: 'Logged out successfully' };
   }
 }
