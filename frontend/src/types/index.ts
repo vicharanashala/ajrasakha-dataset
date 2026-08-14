@@ -51,6 +51,7 @@ export interface IFeedback {
   predefinedOption: string;
   comment: string;
   status?: string;
+  reviewNote?: string;
   createdAt?: string;
   updatedAt?: string;
 }
