@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { questionService, publicDatasetService } from '../services/api';
 import type { Question, PaginatedQuestions, User } from '../types';
@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/atoms/pagination';
 import { AuthPromptModal } from '@/components/AuthPromptModal';
-import { AlertCircle, Loader2, Search, MapPin, Leaf, X, ChevronDown } from 'lucide-react';
+import { AlertCircle, Loader2, Search, MapPin, Leaf, X, ChevronDown, MessagesSquare } from 'lucide-react';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
 
@@ -481,6 +481,7 @@ export function Questions() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [states, setStates] = useState<string[]>([]);
   const [statesLoading, setStatesLoading] = useState(true);
+  const [displayCount, setDisplayCount] = useState(0);
 
   const isAuthenticated = !!localStorage.getItem(USER_STORAGE_KEY);
 
@@ -558,6 +559,38 @@ export function Questions() {
       [key]: value || undefined,
     }));
   };
+
+  // Count-up animation when total changes
+  const animationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!pagination) return;
+    const target = pagination.total;
+    const start = displayCount;
+    const diff = target - start;
+    if (diff === 0) return;
+
+    if (animationRef.current) clearTimeout(animationRef.current);
+
+    const duration = 600;
+    const steps = 30;
+    const stepDuration = duration / steps;
+    let step = 0;
+
+    const tick = () => {
+      step++;
+      const progress = step / steps;
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setDisplayCount(Math.round(start + diff * eased));
+      if (step < steps) {
+        animationRef.current = setTimeout(tick, stepDuration);
+      }
+    };
+    tick();
+
+    return () => {
+      if (animationRef.current) clearTimeout(animationRef.current);
+    };
+  }, [pagination?.total]);
 
   const clearFilter = (key: 'state' | 'crop') => {
     setFilters((prev) => ({ ...prev, [key]: undefined }));
@@ -674,12 +707,20 @@ export function Questions() {
             <button
               type="button"
               onClick={clearAllFilters}
-              className="ml-auto flex h-9 items-center gap-1.5 rounded-full border border-border/70 px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-9 items-center gap-1.5 rounded-full border border-border/70 px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <X className="h-3 w-3" />
               Clear all
             </button>
           )}
+
+          {/* Total Count */}
+          <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg ring-2 ring-primary/70">
+            <MessagesSquare className="h-3.5 w-3.5" />
+            {pagination
+              ? `${displayCount.toLocaleString()} Q&A Pair${pagination.total !== 1 ? 's' : ''}`
+              : '—'}
+          </span>
         </div>
 
         {/* Table Card */}
@@ -838,13 +879,7 @@ export function Questions() {
 
                 {/* Pagination — only show when logged in, z-10 to stay above blur overlay */}
                 {isAuthenticated && pagination && pagination.totalPages > 0 && (
-                  <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-3">
-                    <p className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground tabular-nums">
-                        {pagination.total}
-                      </span>{" "}
-                      results
-                    </p>
+                  <div className="relative z-10 flex items-center justify-end border-t border-border/60 bg-muted/20 px-4 py-3">
                     <Pagination
                       currentPage={pagination.page}
                       totalPages={pagination.totalPages}

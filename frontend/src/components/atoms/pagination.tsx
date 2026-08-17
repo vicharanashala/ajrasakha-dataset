@@ -32,7 +32,7 @@ export const Pagination = ({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full sm:w-auto">
+    <div className="flex items-center gap-2 sm:gap-3">
       {/* Limit Dropdown */}
       {onLimitChange && limit !== undefined && (
         <select
