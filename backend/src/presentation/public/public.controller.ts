@@ -103,7 +103,7 @@ export class PublicController {
   private async authenticateWithJwt(token: string): Promise<{ userId: string; keyId: string }> {
     let payload: { sub: string; email: string };
     try {
-      payload = this.jwtService.verifyToken(token);
+      payload = this.jwtService.verifyAccessToken(token);
     } catch {
       throw new UnauthorizedException('Invalid or expired JWT');
     }

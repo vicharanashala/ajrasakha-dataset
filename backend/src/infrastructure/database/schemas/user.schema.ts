@@ -63,6 +63,9 @@ export class UserEntity {
   @Prop({ type: Boolean, required: false, default: false })
   isWhitelisted?: boolean;
 
+  @Prop({ type: String, required: false })
+  refreshTokenHash?: string;
+
   // Provided by `timestamps: true`
   createdAt!: Date;
   updatedAt!: Date;
