@@ -84,6 +84,7 @@ jobs:
             CORS_ORIGINS=${{ vars.CORS_ORIGINS }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             JWT_EXPIRES_IN=${{ vars.JWT_EXPIRES_IN }}
+            GOOGLE_AUTH_ENABLED=true
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
             GOOGLE_CALLBACK_URL=${{ vars.GOOGLE_CALLBACK_URL }}
@@ -92,5 +93,6 @@ jobs:
             FRONTEND_URL=${{ vars.FRONTEND_URL }}
             REVIEW_SYSTEM_AUTH_KEY=${{ secrets.REVIEW_SYSTEM_AUTH_KEY }}
             REVIEWER_BACKEND_URL=${{ secrets.REVIEWER_BACKEND_URL }}
+            VITE_GOOGLE_AUTH_ENABLED=true
           env_vars_update_strategy: merge
           flags: --allow-unauthenticated
