@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService, clearAuth } from '../services/api';
+import { authService, clearAuth, publicDatasetService } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,8 @@ export function Profile() {
   const [lastName, setLastName] = useState('');
   const [state, setState] = useState('');
   const [email, setEmail] = useState('');
+  const [availableStates, setAvailableStates] = useState<string[]>([]);
+  const [statesLoading, setStatesLoading] = useState(true);
 
   // Password reset state
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -39,6 +41,23 @@ export function Profile() {
   const [resetOtp, setResetOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [resetting, setResetting] = useState(false);
+
+  // Fetch state list from backend
+  useEffect(() => {
+    let cancelled = false;
+    async function loadStates() {
+      try {
+        const data = await publicDatasetService.getAvailableFilters();
+        if (!cancelled) setAvailableStates(data.states);
+      } catch (err) {
+        console.error('Failed to load available states', err);
+      } finally {
+        if (!cancelled) setStatesLoading(false);
+      }
+    }
+    loadStates();
+    return () => { cancelled = true; };
+  }, []);
 
   // Get current user from localStorage
   useEffect(() => {
@@ -247,11 +266,19 @@ export function Profile() {
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 State
               </label>
-              <Input
+              <select
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                placeholder="Enter your state"
-              />
+                disabled={statesLoading}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">{statesLoading ? 'Loading states…' : 'Select your state'}</option>
+                {availableStates.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Save Button */}
