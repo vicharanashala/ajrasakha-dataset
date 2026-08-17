@@ -838,7 +838,7 @@ export function Questions() {
 
                 {/* Pagination — only show when logged in, z-10 to stay above blur overlay */}
                 {isAuthenticated && pagination && pagination.totalPages > 0 && (
-                  <div className="relative z-10 flex items-center justify-between border-t border-border/60 bg-muted/20 px-4 py-3">
+                  <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-3">
                     <p className="text-xs text-muted-foreground">
                       <span className="font-medium text-foreground tabular-nums">
                         {pagination.total}
