@@ -100,7 +100,15 @@ export class FeedbackController {
 
   @Get('user/:userId')
   @UseGuards(JwtAuthGuard)
-  async getAllUserFeedbacks(@Param('userId') userId: string) {
-    return this.feedbackUseCase.getUserFeedbacks(userId);
+  async getAllUserFeedbacks(
+    @Param('userId') userId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.feedbackUseCase.getUserFeedbacks(
+      userId,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 }

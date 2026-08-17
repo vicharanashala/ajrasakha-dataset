@@ -125,11 +125,31 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     return feedbacks.map((f) => this.toIFeedback(f));
   }
 
-  async findByUserId(userId: string): Promise<IFeedback[]> {
-    const feedbacks = await this.feedbackModel.find({
-      userId: new Types.ObjectId(userId),
-    });
-    return feedbacks.map((f) => this.toIFeedback(f));
+  async findByUserId(
+    userId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }> {
+    const pageNum = page ?? 1;
+    const limitNum = Math.min(limit ?? 10, 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [feedbacks, countResult] = await Promise.all([
+      this.feedbackModel
+        .find({ userId: new Types.ObjectId(userId) })
+        .skip(skip)
+        .limit(limitNum)
+        .exec(),
+      this.feedbackModel.countDocuments({ userId: new Types.ObjectId(userId) }),
+    ]);
+
+    return {
+      data: feedbacks.map((f) => this.toIFeedback(f)),
+      total: countResult,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(countResult / limitNum),
+    };
   }
 
   async update(
@@ -145,7 +165,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     const feedback = await this.feedbackModel.findByIdAndUpdate(
       id,
       updateData,
-      { new: true },
+      { returnDocument: 'after' },
     );
     return feedback ? this.toIFeedback(feedback) : null;
   }
@@ -154,7 +174,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     const feedback = await this.feedbackModel.findByIdAndUpdate(
       id,
       { status, reviewNote: note },
-      { new: true },
+      { returnDocument: 'after' },
     );
     return feedback ? this.toIFeedback(feedback) : null;
   }

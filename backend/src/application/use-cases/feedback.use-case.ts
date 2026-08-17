@@ -121,7 +121,11 @@ export class FeedbackUseCase {
     return this.feedbackRepository.findByQuestionId(questionId);
   }
 
-  async getUserFeedbacks(userId: string): Promise<IFeedback[]> {
-    return this.feedbackRepository.findByUserId(userId);
+  async getUserFeedbacks(
+    userId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }> {
+    return this.feedbackRepository.findByUserId(userId, page, limit);
   }
 }

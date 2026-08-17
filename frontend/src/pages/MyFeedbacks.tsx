@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
+import { Pagination } from '@/components/atoms/pagination';
 import { useNavigate } from 'react-router-dom';
 import { feedbackService } from '../services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AuthPromptModal } from '@/components/AuthPromptModal';
 import { IFeedback } from '../types';
+
+interface PaginatedFeedbacks {
+  data: IFeedback[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 import {
   ThumbsUp,
   ThumbsDown,
@@ -21,6 +30,8 @@ export function MyFeedbacks() {
   const [feedbacks, setFeedbacks] = useState<IFeedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pagination, setPagination] = useState<PaginatedFeedbacks | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
@@ -33,16 +44,26 @@ export function MyFeedbacks() {
     fetchUserFeedbacks(parsedUser.id);
   }, []);
 
-  const fetchUserFeedbacks = async (userId: string) => {
+  const fetchUserFeedbacks = async (userId: string, page = 1) => {
     try {
       setLoading(true);
-      const userFeedbacks = await feedbackService.getUserFeedbacks(userId);
-      setFeedbacks(userFeedbacks);
+      const result = await feedbackService.getUserFeedbacks(userId, page, 10);
+      setFeedbacks(result.data);
+      setPagination(result);
+      setCurrentPage(page);
     } catch {
       console.error('Failed to load feedbacks');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+    if (!storedUser) return;
+    const parsedUser = JSON.parse(storedUser);
+    fetchUserFeedbacks(parsedUser.id, page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const formatDate = (dateString?: string) => {
@@ -98,7 +119,7 @@ export function MyFeedbacks() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {feedbacks.length === 0 ? (
+        {feedbacks.length === 0 && !loading ? (
           <Card className="shadow-sm border-border/50">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <MessageCircle className="h-16 w-16 text-muted-foreground/50 mb-4" />
@@ -119,7 +140,7 @@ export function MyFeedbacks() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {feedbacks.length} feedback{feedbacks.length !== 1 ? 's' : ''} provided
+                {pagination ? `${pagination.total} feedback${pagination.total !== 1 ? 's' : ''} provided` : ''}
               </p>
             </div>
             <div className="grid gap-4">
@@ -206,6 +227,16 @@ export function MyFeedbacks() {
                 </Card>
               ))}
             </div>
+
+            {pagination && pagination.totalPages > 1 && (
+              <div className="flex items-center justify-end">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={pagination.totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

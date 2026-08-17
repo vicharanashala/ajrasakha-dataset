@@ -43,7 +43,7 @@ export interface FeedbackRepository {
     userId: string,
   ): Promise<IFeedback | null>;
   findByQuestionId(questionId: string): Promise<IFeedback[]>;
-  findByUserId(userId: string): Promise<IFeedback[]>;
+  findByUserId(userId: string, page?: number, limit?: number): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }>;
   update(
     id: string,
     data: Partial<CreateFeedbackDto>,

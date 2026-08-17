@@ -371,8 +371,16 @@ export const feedbackService = {
     return response.data;
   },
 
-  getUserFeedbacks: async (userId: string): Promise<IFeedback[]> => {
-    const response = await api.get(`/feedbacks/user/${userId}`);
+  getUserFeedbacks: async (
+    userId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }> => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    const qs = params.toString();
+    const response = await api.get(`/feedbacks/user/${userId}${qs ? `?${qs}` : ''}`);
     return response.data;
   },
 };

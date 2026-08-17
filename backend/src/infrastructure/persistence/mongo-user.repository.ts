@@ -71,7 +71,7 @@ export class MongoUserRepository implements UserRepository {
     }
 
     const updated = await this.userModel
-      .findByIdAndUpdate(id, update, { new: true })
+      .findByIdAndUpdate(id, update, { returnDocument: 'after' })
       .exec();
 
     return updated ? this.toEntity(updated) : null;
