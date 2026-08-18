@@ -16,7 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/atoms/pagination';
 import { AuthPromptModal } from '@/components/AuthPromptModal';
-import { AlertCircle, Loader2, Search, MapPin, Leaf, X, ChevronDown, MessagesSquare } from 'lucide-react';
+import { AlertCircle, Loader2, Search, MapPin, Leaf, X, ChevronDown, MessagesSquare, RefreshCw } from 'lucide-react';
+import { Tooltip } from '@/components/ui/tooltip';
+import { getQuestionCountTooltipText } from '@/lib/dateUtils';
 
 import type { QuestionFilters as QuestionFiltersType } from '../types';
 
@@ -715,12 +717,24 @@ export function Questions() {
           )}
 
           {/* Total Count */}
-          <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg ring-2 ring-primary/70">
-            <MessagesSquare className="h-3.5 w-3.5" />
-            {pagination
-              ? `${displayCount.toLocaleString()} Q&A Pair${pagination.total !== 1 ? 's' : ''}`
-              : '—'}
-          </span>
+          <Tooltip
+            content={
+              <span className="flex items-center gap-1.5">
+                <RefreshCw className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs font-medium text-foreground">
+                  Last sync at {getQuestionCountTooltipText()}
+                </span>
+              </span>
+            }
+            side="bottom"
+          >
+            <span className="ml-auto flex cursor-help items-center gap-1.5 whitespace-nowrap rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg ring-2 ring-primary/70">
+              <MessagesSquare className="h-3.5 w-3.5" />
+              {pagination
+                ? `${displayCount.toLocaleString()} Q&A Pair${pagination.total !== 1 ? 's' : ''}`
+                : '—'}
+            </span>
+          </Tooltip>
         </div>
 
         {/* Table Card */}
