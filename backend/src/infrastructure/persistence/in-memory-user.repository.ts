@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '../../domain/repositories/user.repository.interface';
+import {
+  UserRepository,
+  PaginatedDatasetUsers,
+} from '../../domain/repositories/user.repository.interface';
 import { User, CreateUserProps } from '../../domain/entities/user.entity';
 
 @Injectable()
@@ -47,6 +50,31 @@ export class InMemoryUserRepository implements UserRepository {
     };
     this.users[index] = updatedUser;
     return updatedUser;
+  }
+
+  count(): Promise<number> {
+    return Promise.resolve(this.users.length);
+  }
+
+  findListBasic(page: number, limit: number): Promise<PaginatedDatasetUsers> {
+    const total = this.users.length;
+    const skip = (page - 1) * limit;
+    const data = [...this.users]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(skip, skip + limit)
+      .map((user) => ({
+        name: [user.firstName, user.lastName].filter(Boolean).join(' ').trim(),
+        email: user.email,
+        createdAt: user.createdAt,
+      }));
+
+    return Promise.resolve({
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    });
   }
 
   private generateId(): string {

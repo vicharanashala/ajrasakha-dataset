@@ -5,11 +5,13 @@ import {
   Feedback,
   FeedbackDocument,
   FeedbackStatus,
+  FeedbackType,
 } from '../database/schemas/feedback.schema';
 import {
   FeedbackRepository,
   IFeedback,
   CreateFeedbackDto,
+  PaginatedDatasetFeedbacks,
 } from '../../domain/repositories/feedback.repository.interface';
 
 @Injectable()
@@ -46,19 +48,24 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     userId?: string;
     page?: number;
     limit?: number;
-  }): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }> {
+  }): Promise<{
+    data: IFeedback[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const match: Record<string, unknown> = {};
     if (options?.status !== undefined) match.status = options.status;
-    if (options?.questionId) match.questionId = new Types.ObjectId(options.questionId);
+    if (options?.questionId)
+      match.questionId = new Types.ObjectId(options.questionId);
     if (options?.userId) match.userId = new Types.ObjectId(options.userId);
 
     const page = options?.page ?? 1;
     const limit = Math.min(options?.limit ?? 5, 100);
     const skip = (page - 1) * limit;
 
-    const countResult = await this.feedbackModel
-      .countDocuments(match as Record<string, unknown>)
-      .exec();
+    const countResult = await this.feedbackModel.countDocuments(match).exec();
 
     // Use $lookup to join with dataset_users (UserEntity collection)
     const pipeline: object[] = [
@@ -99,12 +106,20 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     ];
 
     const docs = await this.feedbackModel
-      .aggregate(pipeline as Parameters<Model<FeedbackDocument>['aggregate']>[0])
+      .aggregate(
+        pipeline as Parameters<Model<FeedbackDocument>['aggregate']>[0],
+      )
       .exec();
 
     const data = docs.map((d) => this.aggToIFeedback(d));
 
-    return { data, total: countResult, page, limit, totalPages: Math.ceil(countResult / limit) };
+    return {
+      data,
+      total: countResult,
+      page,
+      limit,
+      totalPages: Math.ceil(countResult / limit),
+    };
   }
 
   async findByQuestionIdAndUserId(
@@ -170,7 +185,11 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     return feedback ? this.toIFeedback(feedback) : null;
   }
 
-  async updateStatus(id: string, status: FeedbackStatus, note: string): Promise<IFeedback | null> {
+  async updateStatus(
+    id: string,
+    status: FeedbackStatus,
+    note: string,
+  ): Promise<IFeedback | null> {
     const feedback = await this.feedbackModel.findByIdAndUpdate(
       id,
       { status, reviewNote: note },
@@ -181,10 +200,75 @@ export class MongoFeedbackRepository implements FeedbackRepository {
 
   async countPendingByQuestionId(questionId: string): Promise<number> {
     // questionId is stored as ObjectId in MongoDB — always convert
-    return this.feedbackModel.countDocuments({
-      questionId: new Types.ObjectId(questionId),
-      $nor: [{ status: 'accepted' }, { status: 'rejected' }],
-    } as Record<string, unknown>).exec();
+    return this.feedbackModel
+      .countDocuments({
+        questionId: new Types.ObjectId(questionId),
+        $nor: [{ status: 'accepted' }, { status: 'rejected' }],
+      } as Record<string, unknown>)
+      .exec();
+  }
+
+  async countAll(): Promise<number> {
+    return this.feedbackModel.countDocuments().exec();
+  }
+
+  async findListBasic(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetFeedbacks> {
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      this.feedbackModel
+        .aggregate([
+          {
+            $lookup: {
+              from: 'dataset_users',
+              localField: 'userId',
+              foreignField: '_id',
+              as: '_user',
+            },
+          },
+          { $unwind: { path: '$_user', preserveNullAndEmptyArrays: true } },
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              _id: 0,
+              email: '$_user.email',
+              questionId: 1,
+              tag: '$predefinedOption',
+              type: 1,
+              predefinedOption: 1,
+              comment: 1,
+              reviewNote: 1,
+              status: 1,
+              createdAt: 1,
+            },
+          },
+        ])
+        .exec(),
+      this.countAll(),
+    ]);
+
+    return {
+      data: docs.map((doc: Record<string, unknown>) => ({
+        email: (doc['email'] as string) ?? '',
+        questionId: String(doc['questionId']),
+        tag: (doc['tag'] as string) ?? '',
+        type: doc['type'] as FeedbackType,
+        predefinedOption: (doc['predefinedOption'] as string) ?? '',
+        comment: (doc['comment'] as string) ?? '',
+        reviewNote: doc['reviewNote'] as string | undefined,
+        status: doc['status'] as FeedbackStatus,
+        createdAt: doc['createdAt'] as Date,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async delete(id: string): Promise<boolean> {
@@ -196,7 +280,7 @@ export class MongoFeedbackRepository implements FeedbackRepository {
     return {
       id: doc._id.toString(),
       questionId: doc.questionId.toString(),
-      userId: doc.userId as unknown as { firstName?: string; lastName?: string; email?: string } | Types.ObjectId,
+      userId: doc.userId,
       answerId: doc.answerId?.toString(),
       type: doc.type,
       predefinedOption: doc.predefinedOption,
@@ -206,26 +290,38 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       updatedAt: doc.updatedAt,
       reviewNote: doc.reviewNote,
       isPushedToReviewSystem: doc.isPushedToReviewSystem ?? false,
-      pushToReviewSystemError: (doc as unknown as { pushToReviewSystemError?: string }).pushToReviewSystemError,
+      pushToReviewSystemError: (
+        doc as unknown as { pushToReviewSystemError?: string }
+      ).pushToReviewSystemError,
     };
   }
 
-  private leanToIFeedback(doc: FeedbackDocument, isPopulated?: boolean): IFeedback {
-    const plain = typeof doc.toObject === 'function' ? doc.toObject() : doc as unknown as Record<string, unknown>;
+  private leanToIFeedback(
+    doc: FeedbackDocument,
+    isPopulated?: boolean,
+  ): IFeedback {
+    const plain =
+      typeof doc.toObject === 'function'
+        ? doc.toObject()
+        : (doc as unknown as Record<string, unknown>);
     const rawUserId = plain['userId'] as unknown;
-    const userIdStr = isPopulated && typeof rawUserId === 'object' && rawUserId !== null
-      ? String((rawUserId as { _id: { toString(): string } })._id.toString())
-      : String(rawUserId);
+    const userIdStr =
+      isPopulated && typeof rawUserId === 'object' && rawUserId !== null
+        ? String((rawUserId as { _id: { toString(): string } })._id.toString())
+        : String(rawUserId);
 
     const rawQuestionId = plain['questionId'] as unknown;
-    const questionIdStr = typeof rawQuestionId === 'object' && rawQuestionId !== null
-      ? String((rawQuestionId as { toString(): string }).toString())
-      : String(rawQuestionId);
+    const questionIdStr =
+      typeof rawQuestionId === 'object' && rawQuestionId !== null
+        ? String((rawQuestionId as { toString(): string }).toString())
+        : String(rawQuestionId);
 
     return {
       id: String(plain['_id']),
       questionId: questionIdStr,
-      userId: userIdStr as unknown as { firstName?: string; lastName?: string; email?: string } | Types.ObjectId,
+      userId: userIdStr as unknown as
+        | { firstName?: string; lastName?: string; email?: string }
+        | Types.ObjectId,
       answerId: plain['answerId'] ? String(plain['answerId']) : undefined,
       type: plain['type'] as IFeedback['type'],
       predefinedOption: String(plain['predefinedOption']),
@@ -234,8 +330,10 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       createdAt: plain['createdAt'] as Date | undefined,
       updatedAt: plain['updatedAt'] as Date | undefined,
       reviewNote: plain['reviewNote'] as string | undefined,
-      isPushedToReviewSystem: (plain['isPushedToReviewSystem'] as boolean) ?? false,
-      pushToReviewSystemError: plain['pushToReviewSystemError'] as string | undefined,
+      isPushedToReviewSystem:
+        (plain['isPushedToReviewSystem'] as boolean) ?? false,
+      pushToReviewSystemError: plain['pushToReviewSystemError'] as
+        string | undefined,
     };
   }
 
@@ -251,11 +349,17 @@ export class MongoFeedbackRepository implements FeedbackRepository {
       predefinedOption: String(doc['predefinedOption']),
       comment: String(doc['comment']),
       status: String(doc['status']) as IFeedback['status'],
-      createdAt: doc['createdAt'] ? new Date(doc['createdAt'] as string) : undefined,
-      updatedAt: doc['updatedAt'] ? new Date(doc['updatedAt'] as string) : undefined,
+      createdAt: doc['createdAt']
+        ? new Date(doc['createdAt'] as string)
+        : undefined,
+      updatedAt: doc['updatedAt']
+        ? new Date(doc['updatedAt'] as string)
+        : undefined,
       reviewNote: doc['reviewNote'] as string | undefined,
-      isPushedToReviewSystem: (doc['isPushedToReviewSystem'] as boolean) ?? false,
-      pushToReviewSystemError: doc['pushToReviewSystemError'] as string | undefined,
+      isPushedToReviewSystem:
+        (doc['isPushedToReviewSystem'] as boolean) ?? false,
+      pushToReviewSystemError: doc['pushToReviewSystemError'] as
+        string | undefined,
     };
   }
 }

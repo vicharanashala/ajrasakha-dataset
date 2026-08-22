@@ -3,6 +3,7 @@ import type {
   Question,
   QuestionFilters,
   PaginatedQuestions,
+  PaginatedDatasetQuestions,
 } from '../../domain/repositories/question.repository.interface';
 import {
   QUESTION_REPOSITORY,
@@ -53,6 +54,19 @@ export class QuestionUseCase {
   ): Promise<Question[]> {
     return this.questionRepository.searchByVector(embedding, limit, filters);
   }
+
+  /** Total number of questions, unfiltered — used by the dataset metrics endpoint. */
+  async getTotalCount(): Promise<number> {
+    return this.questionRepository.countAll();
+  }
+
+  /** Unfiltered, minimal-field paginated list — used by the dataset-list metrics endpoint. */
+  async getDatasetList(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetQuestions> {
+    return this.questionRepository.findListBasic(page, limit);
+  }
 }
 
 type QuestionRepository = {
@@ -69,6 +83,11 @@ type QuestionRepository = {
     limit: number,
     filters?: QuestionFilters,
   ): Promise<Question[]>;
+  countAll(): Promise<number>;
+  findListBasic(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetQuestions>;
 };
 
 type FeedbackRepository = {

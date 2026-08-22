@@ -1,10 +1,16 @@
-import { Inject, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import type {
   IFeedback,
   CreateFeedbackDto,
   FeedbackRepository,
+  PaginatedDatasetFeedbacks,
 } from '../../domain/repositories/feedback.repository.interface';
 import { FEEDBACK_REPOSITORY } from '../../domain/repositories/repository.tokens';
 import { FeedbackStatus } from '../../infrastructure/database/schemas/feedback.schema';
@@ -50,10 +56,15 @@ export class FeedbackUseCase {
       }
     } catch (err) {
       // Review system call failed — isPushedToReviewSystem stays false
-      pushToReviewSystemError = err instanceof Error ? err.message : String(err);
+      pushToReviewSystemError =
+        err instanceof Error ? err.message : String(err);
     }
 
-    return this.feedbackRepository.create({ ...data, isPushedToReviewSystem, pushToReviewSystemError });
+    return this.feedbackRepository.create({
+      ...data,
+      isPushedToReviewSystem,
+      pushToReviewSystemError,
+    });
   }
 
   async listFeedbacks(options?: {
@@ -80,24 +91,38 @@ export class FeedbackUseCase {
       );
     }
 
-    const updated = await this.feedbackRepository.updateStatus(feedbackId, status, note);
-    if (!updated) throw new NotFoundException('Feedback not found after update');
+    const updated = await this.feedbackRepository.updateStatus(
+      feedbackId,
+      status,
+      note,
+    );
+    if (!updated)
+      throw new NotFoundException('Feedback not found after update');
 
     const pendingCount = await this.feedbackRepository.countPendingByQuestionId(
       feedback.questionId.toString(),
     );
 
     // Send acknowledgment email
-    const userDoc = await this.userModel.findById(feedback.userId.toString()).lean().exec();
+    const userDoc = await this.userModel
+      .findById(feedback.userId.toString())
+      .lean()
+      .exec();
     if (userDoc?.email) {
-      const questionDoc = await this.questionModel.findById(feedback.questionId.toString()).select('question').lean().exec();
-      const userName = [userDoc.firstName, userDoc.lastName].filter(Boolean).join(' ') || 'User';
+      const questionDoc = await this.questionModel
+        .findById(feedback.questionId.toString())
+        .select('question')
+        .lean()
+        .exec();
+      const userName =
+        [userDoc.firstName, userDoc.lastName].filter(Boolean).join(' ') ||
+        'User';
       const questionText = questionDoc?.question ?? 'your question';
 
       await this.emailService.sendFeedbackAcknowledgment({
         to: userDoc.email,
         userName,
-        action: status as 'accepted' | 'rejected',
+        action: status,
         questionText,
         questionId: feedback.questionId.toString(),
         note,
@@ -127,5 +152,18 @@ export class FeedbackUseCase {
     limit?: number,
   ): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }> {
     return this.feedbackRepository.findByUserId(userId, page, limit);
+  }
+
+  /** Total number of feedbacks, unfiltered — used by the dataset metrics endpoint. */
+  async getTotalCount(): Promise<number> {
+    return this.feedbackRepository.countAll();
+  }
+
+  /** Unfiltered, minimal-field paginated list — used by the dataset-list metrics endpoint. */
+  async getDatasetList(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetFeedbacks> {
+    return this.feedbackRepository.findListBasic(page, limit);
   }
 }

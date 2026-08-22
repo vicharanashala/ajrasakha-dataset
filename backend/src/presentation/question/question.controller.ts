@@ -1,6 +1,7 @@
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { QuestionUseCase } from '../../application/use-cases/question.use-case';
 import type { QuestionFilters } from '../../domain/repositories/question.repository.interface';
+import { ApiKeyGuard } from '../../infrastructure/auth/api-key.guard';
 
 @Controller('questions')
 export class QuestionController {
@@ -77,6 +78,38 @@ export class QuestionController {
       status: status as QuestionFilters['status'],
       source: source as QuestionFilters['source'],
     });
+  }
+
+  /**
+   * GET /questions/total — total number of questions in the dataset (requires API key).
+   * Consumed by the review system's dataset-metrics cards. Declared before the
+   * `:id` route below so "total" isn't matched as a question id.
+   */
+  @Get('total')
+  @UseGuards(ApiKeyGuard)
+  async getTotalCount() {
+    const total = await this.questionUseCase.getTotalCount();
+    return { total };
+  }
+
+  /**
+   * GET /questions/list — unfiltered paginated list of questions (id, question,
+   * createdAt), requires API key. Consumed by the review system's dataset-list
+   * view. Declared before the `:id` route below so "list" isn't matched as a
+   * question id.
+   */
+  @Get('list')
+  @UseGuards(ApiKeyGuard)
+  async getDatasetList(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const pageNum = page ? Math.max(1, parseInt(page, 10)) : 1;
+    const pageSizeNum = pageSize
+      ? Math.min(100, Math.max(1, parseInt(pageSize, 10)))
+      : 10;
+
+    return this.questionUseCase.getDatasetList(pageNum, pageSizeNum);
   }
 
   @Get(':id')

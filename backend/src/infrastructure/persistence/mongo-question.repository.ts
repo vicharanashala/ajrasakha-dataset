@@ -5,8 +5,12 @@ import type {
   QuestionRepository,
   QuestionFilters,
   PaginatedQuestions,
+  PaginatedDatasetQuestions,
 } from '../../domain/repositories/question.repository.interface';
-import type { Question, QuestionDetailResponse } from '../../domain/repositories/question.repository.interface';
+import type {
+  Question,
+  QuestionDetailResponse,
+} from '../../domain/repositories/question.repository.interface';
 import {
   QuestionEntity,
   QuestionEntityDocument,
@@ -89,9 +93,10 @@ export class MongoQuestionRepository implements QuestionRepository {
 
     const skip = (page - 1) * limit;
 
-    const selectFields = searchEmbedding && searchEmbedding.length > 0
-      ? 'question details embedding'
-      : 'question details';
+    const selectFields =
+      searchEmbedding && searchEmbedding.length > 0
+        ? 'question details embedding'
+        : 'question details';
 
     const [docs, total] = await Promise.all([
       this.questionModel
@@ -192,6 +197,41 @@ export class MongoQuestionRepository implements QuestionRepository {
     return scored.map((s) => this.toEntity(s.doc));
   }
 
+  async countAll(): Promise<number> {
+    return this.questionModel.countDocuments().exec();
+  }
+
+  async findListBasic(
+    page: number,
+    limit: number,
+  ): Promise<PaginatedDatasetQuestions> {
+    const skip = (page - 1) * limit;
+
+    const [docs, total] = await Promise.all([
+      this.questionModel
+        .find()
+        .select('question createdAt')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.countAll(),
+    ]);
+
+    return {
+      data: docs.map((doc) => ({
+        id: doc._id.toString(),
+        question: doc.question,
+        createdAt: doc.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   private cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length || a.length === 0) return 0;
 
@@ -214,7 +254,10 @@ export class MongoQuestionRepository implements QuestionRepository {
   ): Question {
     const plain =
       'toObject' in doc
-        ? (doc.toObject({ virtuals: true }) as QuestionEntity & { _id: Types.ObjectId; id?: string })
+        ? (doc.toObject({ virtuals: true }) as QuestionEntity & {
+            _id: Types.ObjectId;
+            id?: string;
+          })
         : (doc as QuestionEntity & { _id: Types.ObjectId; id?: string });
     return {
       id: plain.id ?? plain._id.toString(),
