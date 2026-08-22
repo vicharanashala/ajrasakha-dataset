@@ -74,7 +74,7 @@ export class MongoUserRepository implements UserRepository {
     }
 
     const updated = await this.userModel
-      .findByIdAndUpdate(id, update, { new: true })
+      .findByIdAndUpdate(id, update, { returnDocument: 'after' })
       .exec();
 
     return updated ? this.toEntity(updated) : null;
@@ -134,6 +134,7 @@ export class MongoUserRepository implements UserRepository {
       avatar: plain.avatar ?? undefined,
       authProvider: (plain.authProvider as 'email' | 'google') ?? undefined,
       isWhitelisted: plain.isWhitelisted ?? false,
+      refreshTokenHash: plain.refreshTokenHash ?? undefined,
       createdAt: plain.createdAt,
       updatedAt: plain.updatedAt,
     };

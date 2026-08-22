@@ -15,22 +15,25 @@ import type {
   UpdateProfileRequest,
 } from '../types';
 
-const TOKEN_KEY = 'auth_token';
+let accessToken: string | null = null;
 const USER_KEY = 'auth_user';
 
-// Get token from localStorage
+// Get token from memory
 export const getToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY);
+  return accessToken;
 };
 
-// Set token in localStorage
+// Set token in memory
 export const setToken = (token: string): void => {
-  localStorage.setItem(TOKEN_KEY, token);
+  accessToken = token;
 };
 
-// Remove token from localStorage
+// Remove token from memory
 export const removeToken = (): void => {
-  localStorage.removeItem(TOKEN_KEY);
+  accessToken = null;
+  // Fallback cleanup in case old tokens were stored
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('ajrasakha_token');
 };
 
 // Get user from localStorage
@@ -47,15 +50,13 @@ export const setUser = (user: User): void => {
 // Remove user from localStorage
 export const removeUser = (): void => {
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('ajrasakha_user');
 };
 
 // Clear all auth data
 export const clearAuth = (): void => {
   removeToken();
   removeUser();
-  // Also clear the user key used in App.tsx and elsewhere
-  localStorage.removeItem('ajrasakha_user');
-  localStorage.removeItem('ajrasakha_token');
 };
 
 export interface UserProfile {
@@ -96,22 +97,97 @@ api.interceptors.request.use(
   }
 );
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Response interceptor to handle token expiration
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    // Only redirect on 401 if there's actually a token (meaning it's an expired token)
-    // Don't redirect on 401 during sign-in attempts (wrong credentials)
-    if (error.response?.status === 401 && getToken()) {
-      clearAuth();
-      // /signin is commented out — redirect to home which shows the questions page
-      window.location.href = '/';
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If the refresh endpoint itself failed with 401, don't intercept it to avoid infinite loops
+    if (originalRequest.url === '/auth/refresh') {
+      return Promise.reject(error);
     }
+
+    // Check if error is 401 and we haven't already retried this request
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = 'Bearer ' + token;
+          return api(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Hit the refresh endpoint (cookies are sent automatically)
+        const response = await api.post('/auth/refresh');
+        const newToken = response.data.token;
+        
+        setToken(newToken);
+        if (response.data.user) setUser(response.data.user);
+        
+        api.defaults.headers.common['Authorization'] = 'Bearer ' + newToken;
+        originalRequest.headers.Authorization = 'Bearer ' + newToken;
+        
+        processQueue(null, newToken);
+        
+        return api(originalRequest);
+      } catch (err: any) {
+        console.error('🚨 INTERCEPTOR CATCH BLOCK TRIGGERED 🚨');
+        console.error('Failed Request URL:', err.config?.url);
+        console.error('Error Status:', err.response?.status);
+        console.error('Error Data:', err.response?.data);
+        console.error('Error Message:', err.message);
+        
+        processQueue(err, null);
+        clearAuth();
+        // Restore redirect now that we found the bug
+        window.location.href = '/';
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
+
+export const restoreSession = async (): Promise<boolean> => {
+  try {
+    const response = await api.post('/auth/refresh');
+    if (response.data.token) {
+      setToken(response.data.token);
+      if (response.data.user) setUser(response.data.user);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    return false;
+  }
+};
+
+let devLoginPromise: Promise<{ token: string; user: User }> | null = null;
 
 export const authService = {
   signup: async (data: SignupRequest): Promise<AuthResponse> => {
@@ -180,6 +256,10 @@ export const authService = {
   // running with GOOGLE_AUTH_ENABLED=false in a non-production environment —
   // the backend returns 404 otherwise, matching a route that doesn't exist.
   devLogin: async (): Promise<{ token: string; user: User }> => {
+    if (devLoginPromise) return devLoginPromise;
+    
+    devLoginPromise = (async () => {
+      try {
     const response = await api.post('/auth/dev-login');
     if (response.data.token) {
       setToken(response.data.token);
@@ -188,10 +268,22 @@ export const authService = {
       setUser(response.data.user);
     }
     return response.data;
+      } finally {
+        devLoginPromise = null;
+      }
+    })();
+    
+    return devLoginPromise;
   },
 
-  logout: (): void => {
-    clearAuth();
+  logout: async (): Promise<void> => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      console.error('Logout error', e);
+    } finally {
+      clearAuth();
+    }
   },
 };
 
@@ -279,8 +371,16 @@ export const feedbackService = {
     return response.data;
   },
 
-  getUserFeedbacks: async (userId: string): Promise<IFeedback[]> => {
-    const response = await api.get(`/feedbacks/user/${userId}`);
+  getUserFeedbacks: async (
+    userId: string,
+    page?: number,
+    limit?: number,
+  ): Promise<{ data: IFeedback[]; total: number; page: number; limit: number; totalPages: number }> => {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+    const qs = params.toString();
+    const response = await api.get(`/feedbacks/user/${userId}${qs ? `?${qs}` : ''}`);
     return response.data;
   },
 };

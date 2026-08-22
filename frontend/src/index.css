@@ -65,8 +65,8 @@ body {
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
   --tracking-normal: 0.025em;
   --spacing: 0.25rem;
-  --tooltip-bg: #ffffff;
-  --tooltip-text: #111827;
+  --tooltip-bg: oklch(0.9911 0 0);
+  --tooltip-text: oklch(0.2046 0 0);
 }
 
 .dark {
@@ -119,8 +119,8 @@ body {
   --shadow-xl:
     0px 1px 3px 0px hsl(0 0% 0% / 0.17), 0px 8px 10px -1px hsl(0 0% 0% / 0.17);
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
-  --tooltip-bg: #1f2937;
-  --tooltip-text: #f9fafb;
+  --tooltip-bg: oklch(0.2393 0 0);
+  --tooltip-text: oklch(0.7122 0 0);
 }
 
 @theme inline {
